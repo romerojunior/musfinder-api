@@ -1,4 +1,3 @@
-import { read } from 'fs';
 import { Geolocation } from './geolocation.interface';
 
 export interface User {

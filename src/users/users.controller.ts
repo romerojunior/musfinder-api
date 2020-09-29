@@ -1,6 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 
@@ -9,27 +8,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  create(@Body() createUserDto: CreateUserDto): Promise<void> {
     return this.usersService.create(createUserDto);
   }
 
-  @Get()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll();
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    let user = await this.usersService.findOne(id);
-    if (!user) {
-      throw new NotFoundException();
-    }
-    return user;
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<void> {
-    return this.usersService.remove(id);
+  @Get(':radius')
+  get(@Param('radius', ParseIntPipe) radius: number): Promise<void> {
+    return this.usersService.get(radius);
   }
 
 }

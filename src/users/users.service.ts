@@ -1,32 +1,41 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as admin from 'firebase-admin';
+import * as geofirestore from 'geofirestore';
+
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
+  constructor() {}
 
-  create(createUserDto: CreateUserDto): Promise<User> {
-    const user = new User;
-    user.firstName = createUserDto.firstName;
-    user.lastName = createUserDto.lastName;
-    return this.usersRepository.save(user);
+  async create(createUserDto: CreateUserDto): Promise<void> {
+    const firestore = admin.firestore();
+    const GeoFirestore = geofirestore.initializeApp(firestore);
+    const geocollection = GeoFirestore.collection('users'); //ref
+
+    await geocollection.add({
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName,
+      coordinates: new admin.firestore.GeoPoint(createUserDto.latitude, createUserDto.longitude)
+    })
+
+    return
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async get(radius: number): Promise<void> {
+    const firestore = admin.firestore();
+    const GeoFirestore = geofirestore.initializeApp(firestore);
+    const geocollection = GeoFirestore.collection('users');
+
+    const query = geocollection.near({ center: new admin.firestore.GeoPoint(40.75, -73.98), radius: radius });
+
+    const geosnapshot = await query.get()
+
+    for (var entry of geosnapshot.docs){
+      console.log(`Distance: ${entry.distance.toFixed(2)} km`);
+      console.log(entry.data());
+    }
   }
 
-  findOne(id: string): Promise<User> {
-    return this.usersRepository.findOne(id);
-  }
 
-  async remove(id: string): Promise<void> {
-    await this.usersRepository.delete(id);
-  }  
 }

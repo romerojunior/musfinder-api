@@ -1,9 +1,8 @@
-import { IsString } from 'class-validator';
+import { Double } from "typeorm";
 
 export class CreateUserDto {
-  @IsString()
   firstName: string;
-
-  @IsString()
-  lastName: string; 
+  lastName: string;
+  latitude: number;
+  longitude: number;
 }

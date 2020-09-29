@@ -2,6 +2,8 @@
 /dist
 /node_modules
 
+musfinder-api-firestore.json
+
 # Logs
 logs
 *.log

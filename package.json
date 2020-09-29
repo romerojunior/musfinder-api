@@ -28,6 +28,8 @@
     "@nestjs/typeorm": "^7.1.4",
     "axios": "^0.20.0",
     "class-validator": "^0.12.2",
+    "firebase-admin": "^9.2.0",
+    "geofirestore": "^4.3.0",
     "geolib": "^3.3.1",
     "google-distance": "^1.0.1",
     "pg": "^8.3.3",

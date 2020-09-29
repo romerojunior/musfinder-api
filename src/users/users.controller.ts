@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 
@@ -12,9 +12,9 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get(':radius')
-  get(@Param('radius', ParseIntPipe) radius: number): Promise<void> {
-    return this.usersService.get(radius);
+  @Get('locate')
+  find(@Query() query: any): Promise<void> {
+    return this.usersService.locate(query.radius, {latitude: query.latitude, longitude: query.longitude});
   }
 
 }

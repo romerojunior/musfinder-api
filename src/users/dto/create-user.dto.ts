@@ -1,8 +1,11 @@
-import { Double } from "typeorm";
-
-export class CreateUserDto {
+export interface CreateUserDto {
   firstName: string;
   lastName: string;
-  latitude: number;
-  longitude: number;
+  geolocation: {
+    latitude: number;
+    longitude: number;
+  };
+  profile_description: string;
+  instruments: [string],
+  genres: [string],
 }

@@ -1,11 +1,24 @@
-export interface CreateUserDto {
+import { IsString, IsLatitude, IsLongitude, IsArray } from 'class-validator';
+
+export class CreateUserDto {
+  @IsString()
   firstName: string;
+
+  @IsString()
   lastName: string;
-  geolocation: {
-    latitude: number;
-    longitude: number;
-  };
+
+  @IsLatitude()
+  latitude: number;
+
+  @IsLongitude()
+  longitude: number;
+
+  @IsString()
   profile_description: string;
-  instruments: [string],
-  genres: [string],
+
+  @IsArray()
+  instruments: [string];
+
+  @IsArray()
+  genres: [string];
 }

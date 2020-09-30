@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Query, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, UsePipes, Query, ParseIntPipe, ValidationPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 
@@ -13,8 +13,11 @@ export class UsersController {
   }
 
   @Get('locate')
-  find(@Query() query: any): Promise<void> {
-    return this.usersService.locate(query.radius, {latitude: query.latitude, longitude: query.longitude});
+  locate(@Query() query: any): Promise<void> {
+    return this.usersService.locate(parseInt(query.radius), {
+      latitude: parseFloat(query.latitude),
+      longitude: parseFloat(query.longitude)
+    });
   }
 
 }

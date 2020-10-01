@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Geolocation } from './interfaces';
+import { Geolocation, UserRelativeToPoint } from './interfaces';
 import * as admin from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 
@@ -13,11 +13,10 @@ export class UsersService {
   geocollection = this.GeoFirestore.collection('users');
 
   async create(createUserDto: CreateUserDto): Promise<void> {
-    console.log(createUserDto);
     await this.geocollection.add({
       firstName: createUserDto.firstName,
       lastName: createUserDto.lastName,
-      profile_description: createUserDto.profile_description,
+      profileDesc: createUserDto.profileDesc,
       genres: createUserDto.genres,
       instruments: createUserDto.instruments,
       coordinates: new admin.firestore.GeoPoint(
@@ -27,7 +26,7 @@ export class UsersService {
     })
   }
 
-  async locate(radius: number, geolocation: Geolocation): Promise<any> {
+  async locate(radius: number, geolocation: Geolocation): Promise<UserRelativeToPoint[]> {
     const query = this.geocollection.near({
       radius: radius,
       center: new admin.firestore.GeoPoint(
@@ -41,12 +40,12 @@ export class UsersService {
     const resp = [];
 
     for (var entry of geosnapshot.docs){
-      const a = {
+      const user = {
         distance: `${entry.distance.toFixed(2)} km`,
         ...entry.data()
       }
-      delete a.g;
-      resp.push(a);
+      delete user.g;
+      resp.push(user);
     }
     return resp
   }

@@ -1,7 +1,7 @@
-import { Body, Controller, Post, Get, Query } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, Param, NotFoundException } from '@nestjs/common';
 import { QueryUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
-import { UserRelativeToPoint, Geolocation } from './interfaces';
+import { UserRelativeToPoint, Geolocation, User } from './interfaces';
 
 @Controller('users')
 export class UsersController {
@@ -20,4 +20,21 @@ export class UsersController {
     });
   }
 
+  @Get(':guid')
+  async getUser(@Param('guid') guid: string): Promise<User> {
+    const user: User = await this.usersService.getByGUID(guid);
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return user;
+  }
+
+  @Get(':guid/geolocation')
+  async getUserGeolocation(@Param('guid') guid: string): Promise<Geolocation> {
+    const geolocation: Geolocation = await this.usersService.getGeolocationByGUID(guid);
+    if (!geolocation) {
+      throw new NotFoundException();
+    }
+    return geolocation;
+  }
 }

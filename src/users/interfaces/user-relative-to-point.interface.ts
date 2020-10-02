@@ -1,8 +1,5 @@
-export interface UserRelativeToPoint {
-  firstName: string;
-  lastName: string;
+import { User } from './user.interface';
+ 
+export interface UserRelativeToPoint extends User {
   distance: string;
-  about: string;
-  instruments: [string];
-  genres: [string];
 }

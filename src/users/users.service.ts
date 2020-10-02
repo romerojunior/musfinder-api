@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Geolocation, UserRelativeToPoint } from './interfaces';
+import { Geolocation, UserRelativeToPoint, User } from './interfaces';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
-
 
 @Injectable()
 export class UsersService {
@@ -22,8 +21,10 @@ export class UsersService {
    */
   async create(createUserDto: CreateUserDto): Promise<void> {
     await this.geocollection.doc(createUserDto.guid).set({
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
+      name: {
+        first: createUserDto.name.first,
+        last:  createUserDto.name.last
+      },
       about: createUserDto.about,
       genres: createUserDto.genres,
       instruments: createUserDto.instruments,
@@ -54,22 +55,75 @@ export class UsersService {
     });
 
     const geosnapshot = await query.get();
-
     const response: Array<UserRelativeToPoint> = [];
 
     for (var doc of geosnapshot.docs){
       const data: any = doc.data();
-      const user: UserRelativeToPoint = {
+      response.push(<UserRelativeToPoint>{
+        guid: doc.id,
         about: data.about,
         distance: `${doc.distance.toFixed(2)} km`,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        name: {
+          first: data.name.first,
+          last: data.name.last
+        },
         genres: data.genres,
         instruments: data.instruments,
-      }
-      response.push(user);
+      });
     }
     return response
+  }
+
+  /**
+   * The `getByGUID` method takes a GUID as argument and searches for that
+   * entry within the persistency layer, returning the matched instance.
+   *
+   * @param guid A UUID/GUID string representing the unique identify of a user.
+   *
+   * @returns A promise that resolves to `User` or `null` if nothing is found.
+   */
+  async getByGUID(guid: string): Promise<User|null> {
+    const userRef = this.fs.collection('users').doc(guid);
+
+    const user = await userRef.get();
+    if (!user.exists) {
+      return null;
+    }
+
+    const data = user.data();
+    return <User>{
+      guid: userRef.id,
+      name: {
+        first: data.name.first,
+        last: data.name.last
+      },
+      about: data.about,
+      instruments: data.instruments,
+      genres: data.genres
+    }
+  }
+
+  /**
+   * The `getGeolocationByGUID` method takes a GUID as arguement and searches for that
+   * entry within the persistency layer, returning the geolocation for that entry.
+   *
+   * @param guid A UUID/GUID string representing the unique identify of a user.
+   *
+   * @returns A promise that resolves to `Geolocation` or `null` if nothing is found.
+   */
+  async getGeolocationByGUID(guid: string): Promise<Geolocation|null> {
+    const userRef = this.fs.collection('users').doc(guid);
+
+    const user = await userRef.get();
+    if (!user.exists) {
+      return null;
+    }
+
+    const data = user.data();
+    return <Geolocation>{
+      latitude: data.coordinates.latitude,
+      longitude: data.coordinates.longitude
+    }
   }
 
 }

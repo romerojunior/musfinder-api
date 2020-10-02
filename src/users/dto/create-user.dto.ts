@@ -1,17 +1,23 @@
-import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, IsDate, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, IsUUID, ValidateNested } from 'class-validator';
+
+export class NameDto {
+  @IsString()
+  @IsNotEmpty()
+  first: string;
+
+  @IsString()
+  @IsNotEmpty()
+  last: string;
+}
 
 export class CreateUserDto {
   @IsUUID()
   @IsNotEmpty()
   guid: string;
 
-  @IsString()
   @IsNotEmpty()
-  firstName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
+  @ValidateNested()
+  name: NameDto;
 
   @IsLatitude()
   @IsNotEmpty()

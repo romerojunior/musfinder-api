@@ -1,9 +1,8 @@
 export interface UserRelativeToPoint {
   firstName: string;
   lastName: string;
-  latitude: number;
-  longitude: number;
-  profileDesc: string;
+  distance: string;
+  about: string;
   instruments: [string];
   genres: [string];
 }

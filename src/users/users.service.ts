@@ -1,17 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Geolocation, UserRelativeToPoint } from './interfaces';
-import * as admin from 'firebase-admin';
+import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 
 
 @Injectable()
 export class UsersService {
 
-  fs = admin.firestore();
+  fs = firebase.firestore();
   GeoFirestore = geofirestore.initializeApp(this.fs);
   geocollection = this.GeoFirestore.collection('users');
 
+  /**
+   * The `create` method takes an instance of `CreateUserDto` and creates it
+   * in the persistency layer.
+   *
+   * @param createUserDto A `CreateUserDto` instance.
+   *
+   * @returns void.
+   */
   async create(createUserDto: CreateUserDto): Promise<void> {
     await this.geocollection.doc(createUserDto.guid).set({
       firstName: createUserDto.firstName,
@@ -19,35 +27,49 @@ export class UsersService {
       about: createUserDto.about,
       genres: createUserDto.genres,
       instruments: createUserDto.instruments,
-      coordinates: new admin.firestore.GeoPoint(
+      coordinates: new firebase.firestore.GeoPoint(
         createUserDto.latitude,
         createUserDto.longitude
       )
     })
   }
 
+  /**
+   * The `locate` method takes a radius and a geolocation as argument and
+   * returns all users currently reported within that area.
+   *
+   * @param radius A number (integer) representing the radius of search.
+   * @param geolocation An instance of `Geolocation` representing the center of
+   * search.
+   *
+   * @returns A promise that resolves to a list of `UserRelativeToPoint`.
+   */
   async locate(radius: number, geolocation: Geolocation): Promise<UserRelativeToPoint[]> {
     const query = this.geocollection.near({
       radius: radius,
-      center: new admin.firestore.GeoPoint(
+      center: new firebase.firestore.GeoPoint(
         geolocation.latitude,
         geolocation.longitude
       )
     });
 
-    const geosnapshot = await query.get()
+    const geosnapshot = await query.get();
 
-    const resp = [];
+    const response: Array<UserRelativeToPoint> = [];
 
-    for (var entry of geosnapshot.docs){
-      const user = {
-        distance: `${entry.distance.toFixed(2)} km`,
-        ...entry.data()
+    for (var doc of geosnapshot.docs){
+      const data: any = doc.data();
+      const user: UserRelativeToPoint = {
+        about: data.about,
+        distance: `${doc.distance.toFixed(2)} km`,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        genres: data.genres,
+        instruments: data.instruments,
       }
-      delete user.g;
-      resp.push(user);
+      response.push(user);
     }
-    return resp
+    return response
   }
 
 }

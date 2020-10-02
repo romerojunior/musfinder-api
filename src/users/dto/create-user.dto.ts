@@ -1,6 +1,10 @@
-import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray } from 'class-validator';
+import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, IsDate, IsUUID } from 'class-validator';
 
 export class CreateUserDto {
+  @IsUUID()
+  @IsNotEmpty()
+  guid: string;
+
   @IsString()
   @IsNotEmpty()
   firstName: string;
@@ -19,7 +23,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  profileDesc: string;
+  about: string;
 
   @IsArray()
   @IsNotEmpty()

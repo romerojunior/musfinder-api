@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Get, Query } from '@nestjs/common';
-import { CreateUserDto, QueryUserDto } from './dto';
+import { QueryUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
 import { UserRelativeToPoint } from './interfaces';
 

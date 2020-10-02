@@ -13,10 +13,10 @@ export class UsersService {
   geocollection = this.GeoFirestore.collection('users');
 
   async create(createUserDto: CreateUserDto): Promise<void> {
-    await this.geocollection.add({
+    await this.geocollection.doc(createUserDto.guid).set({
       firstName: createUserDto.firstName,
       lastName: createUserDto.lastName,
-      profileDesc: createUserDto.profileDesc,
+      about: createUserDto.about,
       genres: createUserDto.genres,
       instruments: createUserDto.instruments,
       coordinates: new admin.firestore.GeoPoint(

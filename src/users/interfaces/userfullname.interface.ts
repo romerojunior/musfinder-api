@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class Geolocation {
+export class UserFullname {
   @ApiProperty()
-  latitude: number;
+  first: string;
 
   @ApiProperty()
-  longitude: number;
+  last: string;
 }

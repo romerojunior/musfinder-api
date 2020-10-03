@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as serviceAccount from './musfinder-api-firestore.json';
 import * as firebase from 'firebase-admin';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
 
@@ -30,6 +31,16 @@ async function bootstrap() {
       enableImplicitConversion: true
     },
   }));
+
+  const options = new DocumentBuilder()
+    .setTitle('Musfinder API')
+    .setDescription('This is where you’ll find out how to develop applications with Musfinder API.')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('api', app, document);
+
   await app.listen(3000);
 }
 bootstrap();

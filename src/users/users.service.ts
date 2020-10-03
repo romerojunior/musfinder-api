@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Geolocation, User } from './interfaces';
+import { Geolocation, User } from './models';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 

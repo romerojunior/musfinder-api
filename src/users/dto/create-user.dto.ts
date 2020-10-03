@@ -15,9 +15,7 @@ export class UserFullnameDto {
 
 export class CreateUserDto {
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  guid: string;
+  guid?: string;
 
   @ApiProperty()
   @IsNotEmpty()

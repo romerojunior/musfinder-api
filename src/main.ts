@@ -20,9 +20,7 @@ async function bootstrap() {
     clientC509CertUrl: serviceAccount.client_x509_cert_url
   }
 
-  firebase.initializeApp({
-    credential: firebase.credential.cert(params)
-  });
+  firebase.initializeApp({ credential: firebase.credential.cert(params) });
 
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({

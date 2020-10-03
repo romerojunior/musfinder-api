@@ -1,10 +1,10 @@
-import { Body, Controller, Post, Get, Query, Param, NotFoundException, UseGuards,Headers } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, Param, NotFoundException, UseGuards, Headers } from '@nestjs/common';
 import { QueryUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
-import { Geolocation, User, Error } from './interfaces';
+import { Geolocation, User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import * as constants from '../common/constants';
+import { apiHeaders } from '../common/contants';
 
 @ApiTags('users')
 @Controller('users')
@@ -18,8 +18,10 @@ export class UsersController {
     description: 'Bad request.',
     type: Error,
   })
+  @UseGuards(AuthGuard)
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<void> {
+  async create(@Headers() headers: any, @Body() createUserDto: CreateUserDto): Promise<void> {
+    createUserDto.guid = headers[apiHeaders.X_MUSFINDER_USER_ID];
     return this.usersService.create(createUserDto);
   }
 
@@ -43,7 +45,6 @@ export class UsersController {
     });
   }
 
-  @Get(':guid')
   @ApiOkResponse({
     description: 'User has been found.',
     type: User,
@@ -52,6 +53,7 @@ export class UsersController {
     description: 'User not found.',
     type: Error,
   })
+  @Get(':guid')
   async getUser(@Param('guid') guid: string): Promise<User> {
     const user: User = await this.usersService.getByGUID(guid);
     if (!user) {
@@ -71,7 +73,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':guid/geolocation')
   async getUserGeolocation(@Headers() headers: any, @Param('guid') guid: string): Promise<Geolocation> {
-    const userGUID: string = headers[constants.HEADERS.X_MUSFINDER_USER_ID];
+    const userGUID: string = headers[apiHeaders.X_MUSFINDER_USER_ID];
     const geolocation: Geolocation = await this.usersService.getGeolocationByGUID(userGUID);
     if (!geolocation) {
       throw new NotFoundException();

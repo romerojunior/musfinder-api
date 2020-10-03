@@ -1,0 +1,3 @@
+export const HEADERS = {
+  X_MUSFINDER_USER_ID: `X_MUSFINDER_USER_ID`,
+};

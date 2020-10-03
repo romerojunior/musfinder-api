@@ -1,8 +1,10 @@
-import { Body, Controller, Post, Get, Query, Param, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, Param, NotFoundException, UseGuards,Headers } from '@nestjs/common';
 import { QueryUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
 import { Geolocation, User, Error } from './interfaces';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
+import { AuthGuard } from '../common/guards/auth.guard';
+import * as constants from '../common/constants';
 
 @ApiTags('users')
 @Controller('users')
@@ -66,9 +68,11 @@ export class UsersController {
     description: 'Geolocation not found.',
     type: Error,
   })
+  @UseGuards(AuthGuard)
   @Get(':guid/geolocation')
-  async getUserGeolocation(@Param('guid') guid: string): Promise<Geolocation> {
-    const geolocation: Geolocation = await this.usersService.getGeolocationByGUID(guid);
+  async getUserGeolocation(@Headers() headers: any, @Param('guid') guid: string): Promise<Geolocation> {
+    const userGUID: string = headers[constants.HEADERS.X_MUSFINDER_USER_ID];
+    const geolocation: Geolocation = await this.usersService.getGeolocationByGUID(userGUID);
     if (!geolocation) {
       throw new NotFoundException();
     }

@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import * as serviceAccount from './musfinder-api-firestore.json';
+import * as serviceAccount from './musfinder-api-gcp.json';
 import * as firebase from 'firebase-admin';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 

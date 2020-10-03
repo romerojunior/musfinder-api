@@ -2,7 +2,7 @@
 /dist
 /node_modules
 
-musfinder-api-firestore.json
+musfinder-api-gcp.json
 
 # Logs
 logs

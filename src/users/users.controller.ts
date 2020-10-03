@@ -1,5 +1,5 @@
-import { Body, Controller, Post, Get, Query, Param, NotFoundException, UseGuards, Headers } from '@nestjs/common';
-import { QueryUserDto, CreateUserDto } from './dto';
+import { Body, Controller, Post, Get, Param, NotFoundException, UseGuards, Headers } from '@nestjs/common';
+import { SearchUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
 import { Geolocation, User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
@@ -38,11 +38,8 @@ export class UsersController {
     type: Error,
   })
   @Get('locate')
-  async locate(@Query() queryUserDto: QueryUserDto): Promise<User[]> {
-    return this.usersService.locate(queryUserDto.radius, <Geolocation>{
-      latitude: queryUserDto.latitude,
-      longitude: queryUserDto.longitude
-    });
+  async locate(@Body() searchUserDto: SearchUserDto): Promise<User[]> {
+    return this.usersService.locate(searchUserDto);
   }
 
   @ApiOkResponse({

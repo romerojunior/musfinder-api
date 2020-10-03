@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { Geolocation, User } from './models';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
+import { SearchUserDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -37,20 +38,19 @@ export class UsersService {
 
   /**
    * The `locate` method takes a radius and a geolocation as argument and
-   * returns all users currently reported within that area.
+   * returns all users currently reported within that area according to
+   * search parameters defined within `searchUserDto`.
    *
-   * @param radius A number (integer) representing the radius of search.
-   * @param geolocation An instance of `Geolocation` representing the center of
-   * search.
+   * @param searchUserDto An instance of `SearchUserDto`.
    *
    * @returns A promise that resolves to a list of `User`.
    */
-  async locate(radius: number, geolocation: Geolocation): Promise<User[]> {
+  async locate(searchUserDto: SearchUserDto): Promise<User[]> {
     const query = this.geocollection.near({
-      radius: radius,
+      radius: searchUserDto.radius,
       center: new firebase.firestore.GeoPoint(
-        geolocation.latitude,
-        geolocation.longitude
+        searchUserDto.latitude,
+        searchUserDto.longitude
       )
     });
 
@@ -59,18 +59,42 @@ export class UsersService {
 
     for (var doc of geosnapshot.docs){
       const data: any = doc.data();
-      response.push(<User>{
-        guid: doc.id,
-        about: data.about,
-        distance: `${doc.distance.toFixed(2)} km`,
-        name: {
-          first: data.name.first,
-          last: data.name.last
-        },
-        genres: data.genres,
-        instruments: data.instruments,
-      });
+      let match: boolean = false;
+
+      if (!searchUserDto.instruments && !searchUserDto.genres) {
+        match = true;
+      } else {
+        if (searchUserDto.instruments) {
+          searchUserDto.instruments.forEach(instrument => {
+            if (data.instruments.includes(instrument)) {
+              match = true;
+            }
+          });
+        }
+        if (searchUserDto.genres) {
+          searchUserDto.genres.forEach(genre => {
+            if (data.genres.includes(genre)) {
+              match = true;
+            }
+          });
+        }
+      }
+
+      if (match) {
+        response.push(<User>{
+          guid: doc.id,
+          about: data.about,
+          distance: `${doc.distance.toFixed(2)} km`,
+          name: {
+            first: data.name.first,
+            last: data.name.last
+          },
+          genres: data.genres,
+          instruments: data.instruments,
+        });
+      }
     }
+
     return response
   }
 

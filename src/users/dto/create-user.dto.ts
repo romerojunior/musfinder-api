@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserFullnameDto {
@@ -14,7 +14,8 @@ export class UserFullnameDto {
 }
 
 export class CreateUserDto {
-  @ApiProperty()
+  @ApiProperty({required: false})
+  @IsOptional()
   guid?: string;
 
   @ApiProperty()

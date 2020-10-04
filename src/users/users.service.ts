@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Geolocation, User } from './models';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 import { SearchUserDto } from './dto';
+import * as geokit from 'geokit';
 
 @Injectable()
 export class UsersService {
@@ -45,7 +46,7 @@ export class UsersService {
    *
    * @returns A promise that resolves to a list of `User`.
    */
-  async locate(searchUserDto: SearchUserDto): Promise<User[]> {
+  async search(searchUserDto: SearchUserDto): Promise<User[]> {
     const query = this.geocollection.near({
       radius: searchUserDto.radius,
       center: new firebase.firestore.GeoPoint(
@@ -106,7 +107,7 @@ export class UsersService {
    *
    * @returns A promise that resolves to `User` or `null` if nothing is found.
    */
-  async getByGUID(guid: string): Promise<User|null> {
+  async getUserByGUID(guid: string): Promise<User|null> {
     const userRef = this.fs.collection('users').doc(guid);
 
     const user = await userRef.get();
@@ -150,4 +151,29 @@ export class UsersService {
     }
   }
 
+  /**
+   * The `getDistanceByGUIDs` method takes a current and remote users GUID, fetches
+   * their respective geolocations and calculates the distance between them.
+   *
+   * @param currentGUID A UUID/GUID string representing the unique identify of a user.
+   * @param remoteGUID A UUID/GUID string representing the unique identify of a user.
+   *
+   * @returns A promise that resolves to `number`.
+   */
+  async getDistanceByGUIDs(currentGUID: string, remoteGUID: string): Promise<number> {
+    const currentGeolocation = await this.getGeolocationByGUID(currentGUID);
+    if (!currentGeolocation) {
+      throw new NotFoundException();
+    }
+
+    const remoteGeolocation = await this.getGeolocationByGUID(remoteGUID);
+    if (!remoteGeolocation) {
+      throw new NotFoundException();
+    }
+
+    const start = {lat: currentGeolocation.latitude, lng: currentGeolocation.longitude};
+    const end = {lat: remoteGeolocation.latitude, lng: remoteGeolocation.longitude};
+
+    return geokit.distance(start, end);
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, NotFoundException, UseGuards, Headers } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UnauthorizedException, NotFoundException, UseGuards, Headers } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto } from './dto';
 import { UsersService } from './users.service';
 import { Geolocation, User, Error } from './models';
@@ -9,7 +9,7 @@ import { apiHeaders } from '../common/contants';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @ApiCreatedResponse({
     description: 'User has been created.'
@@ -20,8 +20,11 @@ export class UsersController {
   })
   @UseGuards(AuthGuard)
   @Post()
-  async create(@Headers() headers: any, @Body() createUserDto: CreateUserDto): Promise<void> {
-    createUserDto.guid = headers[apiHeaders.X_MUSFINDER_USER_ID];
+  async create(
+    @Headers(apiHeaders.X_MUSFINDER_USER_ID) guid: string,
+    @Body() createUserDto: CreateUserDto
+  ): Promise<void> {
+    createUserDto.guid = guid;
     return this.usersService.create(createUserDto);
   }
 
@@ -37,9 +40,11 @@ export class UsersController {
     description: 'Bad request.',
     type: Error,
   })
-  @Get('locate')
-  async locate(@Body() searchUserDto: SearchUserDto): Promise<User[]> {
-    return this.usersService.locate(searchUserDto);
+  @Get('search')
+  async locate(
+    @Body() searchUserDto: SearchUserDto
+  ): Promise<User[]> {
+    return this.usersService.search(searchUserDto);
   }
 
   @ApiOkResponse({
@@ -51,8 +56,10 @@ export class UsersController {
     type: Error,
   })
   @Get(':guid')
-  async getUser(@Param('guid') guid: string): Promise<User> {
-    const user: User = await this.usersService.getByGUID(guid);
+  async getUser(
+    @Param('guid') guid: string
+  ): Promise<User> {
+    const user: User = await this.usersService.getUserByGUID(guid);
     if (!user) {
       throw new NotFoundException();
     }
@@ -68,13 +75,11 @@ export class UsersController {
     type: Error,
   })
   @UseGuards(AuthGuard)
-  @Get(':guid/geolocation')
-  async getUserGeolocation(@Headers() headers: any, @Param('guid') guid: string): Promise<Geolocation> {
-    const userGUID: string = headers[apiHeaders.X_MUSFINDER_USER_ID];
-    const geolocation: Geolocation = await this.usersService.getGeolocationByGUID(userGUID);
-    if (!geolocation) {
-      throw new NotFoundException();
-    }
-    return geolocation;
+  @Get(':guid/distance')
+  async getUserGeolocation(
+    @Headers(apiHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
+    @Param('guid') remoteGUID: string
+  ): Promise<number> {
+    return this.usersService.getDistanceByGUIDs(currentGUID, remoteGUID);
   }
 }

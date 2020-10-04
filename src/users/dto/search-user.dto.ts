@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsLatitude, IsLongitude, IsInt, IsArray, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsLatitude, IsLongitude, IsInt, IsArray, IsOptional, ArrayMinSize } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SearchUserDto {
@@ -17,13 +17,15 @@ export class SearchUserDto {
   @IsNotEmpty()
   longitude: number;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsArray()
   @IsOptional()
+  @ArrayMinSize(1)
   instruments?: string[];
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsArray()
   @IsOptional()
+  @ArrayMinSize(1)
   genres?: string[];
 }

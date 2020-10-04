@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Geolocation, User } from './models';
+import { SearchUserDto } from './dto';
+import { each, intersection, isEmpty } from 'lodash';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
-import { SearchUserDto } from './dto';
 import * as geokit from 'geokit';
 
 @Injectable()
@@ -14,18 +15,16 @@ export class UsersService {
   geocollection = this.GeoFirestore.collection('users');
 
   /**
-   * The `create` method takes an instance of `CreateUserDto` and creates it
-   * in the persistency layer.
+   * The `create` method takes an instance of `CreateUserDto` as an argument and creates 
+   * it in the persistency layer.
    *
-   * @param createUserDto A `CreateUserDto` instance.
-   *
-   * @returns Instance of `User`.
+   * @param createUserDto An instance of `CreateUserDto`.
    */
   async create(createUserDto: CreateUserDto): Promise<void> {
     await this.geocollection.doc(createUserDto.guid).set({
       name: {
         first: createUserDto.name.first,
-        last:  createUserDto.name.last
+        last: createUserDto.name.last
       },
       about: createUserDto.about,
       genres: createUserDto.genres,
@@ -38,13 +37,14 @@ export class UsersService {
   }
 
   /**
-   * The `locate` method takes a radius and a geolocation as argument and
-   * returns all users currently reported within that area according to
-   * search parameters defined within `searchUserDto`.
+   * The `search` method takes an instance of `SearchUserDto` as an agument and executes a 
+   * geoquery based on the required properties of `SearchUserDto` (`_.radius`, `_.latitude`,
+   * `_.longitude`), it will then filter the results obtained from this geoquery using the
+   * optional properties of `SearchUserDto` (`_.instruments` and `_.genres`).
    *
    * @param searchUserDto An instance of `SearchUserDto`.
    *
-   * @returns A promise that resolves to a list of `User`.
+   * @returns A list of `User`.
    */
   async search(searchUserDto: SearchUserDto): Promise<User[]> {
     const query = this.geocollection.near({
@@ -58,28 +58,12 @@ export class UsersService {
     const geosnapshot = await query.get();
     const response: Array<User> = [];
 
-    for (var doc of geosnapshot.docs){
+    each(geosnapshot.docs, doc => {
       const data: any = doc.data();
-      let match: boolean = false;
 
-      if (!searchUserDto.instruments && !searchUserDto.genres) {
-        match = true;
-      } else {
-        if (searchUserDto.instruments) {
-          searchUserDto.instruments.forEach(instrument => {
-            if (data.instruments.includes(instrument)) {
-              match = true;
-            }
-          });
-        }
-        if (searchUserDto.genres) {
-          searchUserDto.genres.forEach(genre => {
-            if (data.genres.includes(genre)) {
-              match = true;
-            }
-          });
-        }
-      }
+      const match: boolean = (!searchUserDto.instruments && !searchUserDto.genres) ||
+        !isEmpty(intersection(searchUserDto.instruments, data.instruments)) ||
+        !isEmpty(intersection(searchUserDto.genres, data.genres));
 
       if (match) {
         response.push(<User>{
@@ -94,25 +78,27 @@ export class UsersService {
           instruments: data.instruments,
         });
       }
-    }
+    });
 
     return response
   }
 
   /**
-   * The `getByGUID` method takes a GUID as argument and searches for that
-   * entry within the persistency layer, returning the matched instance.
+   * The `get` method tries to fetch an user by its `_.guid` property, throwing a 
+   * `NotFoundException` in case the user cannot be found.
    *
-   * @param guid A UUID/GUID string representing the unique identify of a user.
+   * @param guid string representing the GUID of a user.
    *
-   * @returns A promise that resolves to `User` or `null` if nothing is found.
+   * @returns An instance of `User`.
+   * 
+   * @throws {NotFoundException} `guid` not found.
    */
-  async getUserByGUID(guid: string): Promise<User|null> {
+  async get(guid: string): Promise<User> {
     const userRef = this.fs.collection('users').doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
-      return null;
+      throw new NotFoundException();
     }
 
     const data = user.data();
@@ -120,60 +106,77 @@ export class UsersService {
       guid: userRef.id,
       name: {
         first: data.name.first,
-        last: data.name.last
+        last: data.name.last,
       },
       about: data.about,
       instruments: data.instruments,
-      genres: data.genres
+      genres: data.genres,
     }
   }
 
   /**
-   * The `getGeolocationByGUID` method takes a GUID as arguement and searches for that
-   * entry within the persistency layer, returning the geolocation for that entry.
+   * The `getWithGeolocation` method tries to fetch an user by its `_.guid` property,
+   * throwing a `NotFoundException` in case the user cannot be found. The instance of
+   * `User` returned by this method contains the `_.coordinates` property.
    *
-   * @param guid A UUID/GUID string representing the unique identify of a user.
-   *
-   * @returns A promise that resolves to `Geolocation` or `null` if nothing is found.
+   * @param guid string representing the GUID of a user.
+   * 
+   * @returns An instance of `User`.
+   * 
+   * @throws {NotFoundException} `guid` not found.
    */
-  async getGeolocationByGUID(guid: string): Promise<Geolocation|null> {
+  async getWithGeolocation(guid: string): Promise<User> {
     const userRef = this.fs.collection('users').doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
-      return null;
+      throw new NotFoundException();
     }
 
     const data = user.data();
-    return <Geolocation>{
-      latitude: data.coordinates.latitude,
-      longitude: data.coordinates.longitude
+    return <User>{
+      guid: userRef.id,
+      name: {
+        first: data.name.first,
+        last: data.name.last,
+      },
+      about: data.about,
+      instruments: data.instruments,
+      genres: data.genres,
+      coordinates: <Geolocation>{
+        latitude: data.coordinates.latitude,
+        longitude: data.coordinates.longitude
+      }
     }
   }
 
   /**
-   * The `getDistanceByGUIDs` method takes a current and remote users GUID, fetches
-   * their respective geolocations and calculates the distance between them.
+   * The `calculateDistanceBetweenGUIDs` method tries to fetch both users identified by 
+   * the arguments `startUserGUID` and `endUserGUID`, throwing a `NotFoundException` in 
+   * case it cannot find any. It then calculates the distance in kilometers between users 
+   * based on their `_.coordinates` property.
+   * 
+   * @param starUserGUID A string representing the GUID of a user.
+   * @param endUserGUID A string representing the GUID of a user.
    *
-   * @param currentGUID A UUID/GUID string representing the unique identify of a user.
-   * @param remoteGUID A UUID/GUID string representing the unique identify of a user.
-   *
-   * @returns A promise that resolves to `number`.
+   * @returns A number representing the distance in kilometers.
+   * 
+   * @throws {NotFoundException} `guid` not found.
    */
-  async getDistanceByGUIDs(currentGUID: string, remoteGUID: string): Promise<number> {
-    const currentGeolocation = await this.getGeolocationByGUID(currentGUID);
-    if (!currentGeolocation) {
+  async calculateDistanceBetweenGUIDs(starUserGUID: string, endUserGUID: string): Promise<number> {
+    const starUser = await this.getWithGeolocation(starUserGUID);
+    if (!starUser) {
       throw new NotFoundException();
     }
 
-    const remoteGeolocation = await this.getGeolocationByGUID(remoteGUID);
-    if (!remoteGeolocation) {
+    const endUser = await this.getWithGeolocation(endUserGUID);
+    if (!endUser) {
       throw new NotFoundException();
     }
 
-    const start = {lat: currentGeolocation.latitude, lng: currentGeolocation.longitude};
-    const end = {lat: remoteGeolocation.latitude, lng: remoteGeolocation.longitude};
-
-    return geokit.distance(start, end);
+    return geokit.distance(
+      { lat: starUser.coordinates.latitude, lng: starUser.coordinates.longitude },
+      { lat: starUser.coordinates.latitude, lng: starUser.coordinates.longitude }
+    );
   }
 }

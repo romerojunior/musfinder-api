@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { apiHeaders } from '../common/contants';
+import { apiHeaders } from '../common/constants';
 
 @ApiTags('users')
 @Controller('users')
@@ -35,7 +35,7 @@ export class UsersController {
   }
 
   /**
-   * The `search` method takes an instance of `SearchUserDto` via the body of an 
+   * The `search` method takes an instance of `SearchUserDto` via the body of an
    * authenticated request and returns a list of users matching the `SearchUserDto`
    * criterias.
    *
@@ -64,7 +64,7 @@ export class UsersController {
 
   /**
    * The `getUser` method tries to retrieve a user resource by its GUID.
-   * 
+   *
    * @param guid string representing the GUID of a user.
    * @param remoteGUID string representing the GUID of a user.
    *
@@ -86,9 +86,9 @@ export class UsersController {
   }
 
   /**
-   * The `calculateDistance` method retrieve the distance between an authenticated user 
+   * The `calculateDistance` method retrieve the distance between an authenticated user
    * (based on headers) and the requested resource (represented by `guid`).
-   * 
+   *
    * @param currentGUID string representing the GUID of a user.
    * @param remoteGUID string representing the GUID of a user.
    *

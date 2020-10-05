@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import * as firebase from 'firebase-admin';
-import { apiHeaders } from '../contants';
+import { apiHeaders } from '../constants';
 import { isEmpty, replace } from 'lodash';
 
 @Injectable()

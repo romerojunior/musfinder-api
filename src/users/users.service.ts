@@ -15,7 +15,7 @@ export class UsersService {
   geocollection = this.GeoFirestore.collection('users');
 
   /**
-   * The `create` method takes an instance of `CreateUserDto` as an argument and creates 
+   * The `create` method takes an instance of `CreateUserDto` as an argument and creates
    * it in the persistency layer.
    *
    * @param createUserDto An instance of `CreateUserDto`.
@@ -37,7 +37,7 @@ export class UsersService {
   }
 
   /**
-   * The `search` method takes an instance of `SearchUserDto` as an agument and executes a 
+   * The `search` method takes an instance of `SearchUserDto` as an agument and executes a
    * geoquery based on the required properties of `SearchUserDto` (`_.radius`, `_.latitude`,
    * `_.longitude`), it will then filter the results obtained from this geoquery using the
    * optional properties of `SearchUserDto` (`_.instruments` and `_.genres`).
@@ -84,13 +84,13 @@ export class UsersService {
   }
 
   /**
-   * The `get` method tries to fetch an user by its `_.guid` property, throwing a 
+   * The `get` method tries to fetch an user by its `_.guid` property, throwing a
    * `NotFoundException` in case the user cannot be found.
    *
    * @param guid string representing the GUID of a user.
    *
    * @returns An instance of `User`.
-   * 
+   *
    * @throws {NotFoundException} `guid` not found.
    */
   async get(guid: string): Promise<User> {
@@ -120,9 +120,9 @@ export class UsersService {
    * `User` returned by this method contains the `_.coordinates` property.
    *
    * @param guid string representing the GUID of a user.
-   * 
+   *
    * @returns An instance of `User`.
-   * 
+   *
    * @throws {NotFoundException} `guid` not found.
    */
   async getWithGeolocation(guid: string): Promise<User> {
@@ -151,16 +151,16 @@ export class UsersService {
   }
 
   /**
-   * The `calculateDistanceBetweenGUIDs` method tries to fetch both users identified by 
-   * the arguments `startUserGUID` and `endUserGUID`, throwing a `NotFoundException` in 
-   * case it cannot find any. It then calculates the distance in kilometers between users 
+   * The `calculateDistanceBetweenGUIDs` method tries to fetch both users identified by
+   * the arguments `startUserGUID` and `endUserGUID`, throwing a `NotFoundException` in
+   * case it cannot find any. It then calculates the distance in kilometers between users
    * based on their `_.coordinates` property.
-   * 
+   *
    * @param starUserGUID A string representing the GUID of a user.
    * @param endUserGUID A string representing the GUID of a user.
    *
    * @returns A number representing the distance in kilometers.
-   * 
+   *
    * @throws {NotFoundException} `guid` not found.
    */
   async calculateDistanceBetweenGUIDs(starUserGUID: string, endUserGUID: string): Promise<number> {

@@ -1,18 +1,19 @@
-import { Body, Controller, Post, Get, Param, UseGuards, Headers } from '@nestjs/common';
-import { SearchUserDto, CreateUserDto } from './dto';
+import { Body, Controller, Post, Get, Param, UseGuards, Headers, Patch } from '@nestjs/common';
+import { SearchUserDto, CreateUserDto, UpdateAssociationDto } from './dto';
 import { UsersService } from './services/users.service';
 import { User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { CustomHeaders } from '../common/constants';
-import { FriendshipService } from './services/friendship.service';
+import { privateHeaders } from '../common/constants';
+import { Tasks } from '../common/enums';
+import { UsersAssociationService } from './services/usersAssociation.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly friendshipService: FriendshipService,
+    private readonly usersAssociationService: UsersAssociationService,
   ) { }
 
   /**
@@ -20,6 +21,7 @@ export class UsersController {
    * authenticated request and calls the user service to finally persist it.
    *
    * @param createUserDto an instance of `CreateUserDto` representing an user.
+   * @param guid a string representing the GUID of a user.
    */
   @ApiCreatedResponse({
     description: 'User has been created.'
@@ -32,7 +34,7 @@ export class UsersController {
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
-    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) guid: string,
+    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) guid: string,
   ): Promise<void> {
     createUserDto.guid = guid;
     return this.usersService.create(createUserDto);
@@ -40,12 +42,12 @@ export class UsersController {
 
   /**
    * The `search` method takes an instance of `SearchUserDto` via the body of an
-   * authenticated request and returns a list of users matching the `SearchUserDto`
-   * criterias.
+   * authenticated request (based on `Authentication` header) and returns a list of users
+   * matching the `SearchUserDto` criterias.
    *
    * @param searchUserDto an instance of `searchUserDto` representing all search criterias.
    *
-   * @returns A list of `Users`.
+   * @returns a list of `Users`.
    */
   @ApiOkResponse({
     description: 'User has been found.',
@@ -69,10 +71,10 @@ export class UsersController {
   /**
    * The `getUser` method tries to retrieve a user resource by its GUID.
    *
-   * @param guid string representing the GUID of a user.
-   * @param remoteGUID string representing the GUID of a user.
+   * @param guid a string representing the GUID of a user.
+   * @param remoteGUID a string representing the GUID of a user.
    *
-   * @returns A `User` representing requested resource.
+   * @returns a `User` representing requested resource.
    */
   @ApiOkResponse({
     description: 'User has been found.',
@@ -90,13 +92,14 @@ export class UsersController {
   }
 
   /**
-   * The `calculateDistance` method retrieve the distance between an authenticated user
-   * (based on headers) and the requested resource (represented by `guid`).
+   * The `calculateDistance` method tries retrieves the distance between an authenticated 
+   * user (based on `Authentication` header) and the requested resource (represented by 
+   * `guid`).
    *
-   * @param currentGUID string representing the GUID of a user.
-   * @param remoteGUID string representing the GUID of a user.
+   * @param currentGUID a string representing the GUID of an authenticated user.
+   * @param remoteGUID a string representing the GUID of a user.
    *
-   * @returns A `number` representing the distance in kilometers.
+   * @returns a `number` representing the distance in kilometers.
    */
   @ApiOkResponse({
     description: 'The distance in kilometers between authorized request and resource.',
@@ -110,17 +113,47 @@ export class UsersController {
   @Get(':guid/distance')
   async calculateDistance(
     @Param('guid') remoteGUID: string,
-    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
+    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
   ): Promise<number> {
     return this.usersService.calculateDistanceBetweenGUIDs(currentGUID, remoteGUID);
   }
 
+  /**
+  * The `initAssociation` method initiates an association between an authenticated user
+  * (based on `Authentication` header) and the requested user resource (from URI).
+  *
+  * @param currentGUID a string representing the GUID of an authenticated user.
+  * @param remoteGUID a string representing the GUID of a user.
+  */
   @UseGuards(AuthGuard)
-  @Get(':guid/invite')
-  async inviteUser(
+  @Post(':guid/associations')
+  async initAssociation(
     @Param('guid') remoteGUID: string,
-    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
-  ): Promise<string> {
-    return this.friendshipService.invite(currentGUID, remoteGUID);
+    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+  ): Promise<void> {
+    return this.usersAssociationService.init(currentGUID, remoteGUID);
+  }
+
+  /**
+  * The `modifyAssociation` method modifies an association between an authenticated user
+  * (based on `Authentication` header) and the requested user resource (from URI).
+  *
+  * @param updateAssociationDto an instance of `updateAssociationDto`.
+  * @param currentGUID a string representing the GUID of an authenticated user.
+  * @param remoteGUID a string representing the GUID of a user.
+  */
+  @UseGuards(AuthGuard)
+  @Patch(':guid/association')
+  async modifyAssociation(
+    @Body() updateAssociationDto: UpdateAssociationDto,
+    @Param('guid') remoteGUID: string,
+    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+  ): Promise<void> {
+    if (updateAssociationDto.task == Tasks.ACCEPT) {
+      await this.usersAssociationService.update(Tasks.ACCEPT, currentGUID, remoteGUID);
+    }
+    if (updateAssociationDto.task == Tasks.REJECT) {
+      await this.usersAssociationService.update(Tasks.REJECT, currentGUID, remoteGUID);
+    }
   }
 }

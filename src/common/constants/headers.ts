@@ -1,1 +1,1 @@
-export const X_MUSFINDER_USER_ID: string = `x-musfinder-user-id`;
+export const AUTHENTICATED_USER_GUID: string = `authenticated_user_guid`;

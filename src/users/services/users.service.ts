@@ -3,7 +3,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { Geolocation, User } from '../models';
 import { SearchUserDto } from '../dto';
 import { each, intersection, isEmpty } from 'lodash';
-import { Collections } from '../../common/constants';
+import { collections } from '../../common/constants';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 import * as geokit from 'geokit';
@@ -13,7 +13,7 @@ export class UsersService {
 
   private fs = firebase.firestore();
   private GeoFirestore = geofirestore.initializeApp(this.fs);
-  private geocollection = this.GeoFirestore.collection(Collections.USERS);
+  private geocollection = this.GeoFirestore.collection(collections.USERS);
 
   /**
    * The `create` method takes an instance of `CreateUserDto` as an argument and creates
@@ -95,7 +95,7 @@ export class UsersService {
    * @throws {NotFoundException} If the GUID cannot be found.
    */
   async get(guid: string): Promise<User> {
-    const userRef = this.fs.collection(Collections.USERS).doc(guid);
+    const userRef = this.fs.collection(collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -127,7 +127,7 @@ export class UsersService {
    * @throws {NotFoundException} If the GUID cannot be found.
    */
   async getWithGeolocation(guid: string): Promise<User> {
-    const userRef = this.fs.collection(Collections.USERS).doc(guid);
+    const userRef = this.fs.collection(collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {

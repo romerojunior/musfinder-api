@@ -1,1 +1,3 @@
-export * as apiHeaders from './api.headers';
+export * as CustomHeaders from './headers';
+export * as Collections from './collections';
+export * as Statuses from './statuses';

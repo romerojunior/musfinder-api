@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { Geolocation, User } from './models';
-import { SearchUserDto } from './dto';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { Geolocation, User } from '../models';
+import { SearchUserDto } from '../dto';
 import { each, intersection, isEmpty } from 'lodash';
+import { Collections } from '../../common/constants';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 import * as geokit from 'geokit';
@@ -10,9 +11,9 @@ import * as geokit from 'geokit';
 @Injectable()
 export class UsersService {
 
-  fs = firebase.firestore();
-  GeoFirestore = geofirestore.initializeApp(this.fs);
-  geocollection = this.GeoFirestore.collection('users');
+  private fs = firebase.firestore();
+  private GeoFirestore = geofirestore.initializeApp(this.fs);
+  private geocollection = this.GeoFirestore.collection(Collections.USERS);
 
   /**
    * The `create` method takes an instance of `CreateUserDto` as an argument and creates
@@ -91,10 +92,10 @@ export class UsersService {
    *
    * @returns An instance of `User`.
    *
-   * @throws {NotFoundException} `guid` not found.
+   * @throws {NotFoundException} If the GUID cannot be found.
    */
   async get(guid: string): Promise<User> {
-    const userRef = this.fs.collection('users').doc(guid);
+    const userRef = this.fs.collection(Collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -123,10 +124,10 @@ export class UsersService {
    *
    * @returns An instance of `User`.
    *
-   * @throws {NotFoundException} `guid` not found.
+   * @throws {NotFoundException} If the GUID cannot be found.
    */
   async getWithGeolocation(guid: string): Promise<User> {
-    const userRef = this.fs.collection('users').doc(guid);
+    const userRef = this.fs.collection(Collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -161,7 +162,7 @@ export class UsersService {
    *
    * @returns A number representing the distance in kilometers.
    *
-   * @throws {NotFoundException} `guid` not found.
+   * @throws {NotFoundException} If any of the GUIDs cannot be found.
    */
   async calculateDistanceBetweenGUIDs(starUserGUID: string, endUserGUID: string): Promise<number> {
     const starUser = await this.getWithGeolocation(starUserGUID);
@@ -176,7 +177,7 @@ export class UsersService {
 
     return geokit.distance(
       { lat: starUser.coordinates.latitude, lng: starUser.coordinates.longitude },
-      { lat: starUser.coordinates.latitude, lng: starUser.coordinates.longitude }
+      { lat: endUser.coordinates.latitude, lng: endUser.coordinates.longitude }
     );
   }
 }

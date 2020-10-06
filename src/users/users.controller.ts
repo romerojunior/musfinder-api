@@ -1,15 +1,19 @@
 import { Body, Controller, Post, Get, Param, UseGuards, Headers } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto } from './dto';
-import { UsersService } from './users.service';
+import { UsersService } from './services/users.service';
 import { User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { apiHeaders } from '../common/constants';
+import { CustomHeaders } from '../common/constants';
+import { FriendshipService } from './services/friendship.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly friendshipService: FriendshipService,
+  ) { }
 
   /**
    * The `create` method takes an instance of `CreateUserDto` via the body of an
@@ -27,8 +31,8 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Post()
   async create(
-    @Headers(apiHeaders.X_MUSFINDER_USER_ID) guid: string,
-    @Body() createUserDto: CreateUserDto
+    @Body() createUserDto: CreateUserDto,
+    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) guid: string,
   ): Promise<void> {
     createUserDto.guid = guid;
     return this.usersService.create(createUserDto);
@@ -80,7 +84,7 @@ export class UsersController {
   })
   @Get(':guid')
   async getUser(
-    @Param('guid') guid: string
+    @Param('guid') guid: string,
   ): Promise<User> {
     return this.usersService.get(guid);
   }
@@ -105,9 +109,18 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':guid/distance')
   async calculateDistance(
-    @Headers(apiHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
-    @Param('guid') remoteGUID: string
+    @Param('guid') remoteGUID: string,
+    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
   ): Promise<number> {
     return this.usersService.calculateDistanceBetweenGUIDs(currentGUID, remoteGUID);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':guid/invite')
+  async inviteUser(
+    @Param('guid') remoteGUID: string,
+    @Headers(CustomHeaders.X_MUSFINDER_USER_ID) currentGUID: string,
+  ): Promise<string> {
+    return this.friendshipService.invite(currentGUID, remoteGUID);
   }
 }

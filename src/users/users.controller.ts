@@ -1,19 +1,18 @@
 import { Body, Controller, Post, Get, Param, UseGuards, Headers, Patch } from '@nestjs/common';
-import { SearchUserDto, CreateUserDto, UpdateAssociationDto } from './dto';
+import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
 import { User, Error } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { privateHeaders } from '../common/constants';
-import { Tasks } from '../common/enums';
-import { UsersAssociationService } from './services/usersAssociation.service';
+import { UsersFriendshipService } from './services/users-friendship.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly usersAssociationService: UsersAssociationService,
+    private readonly usersFriendshipService: UsersFriendshipService,
   ) { }
 
   /**
@@ -92,8 +91,8 @@ export class UsersController {
   }
 
   /**
-   * The `calculateDistance` method tries retrieves the distance between an authenticated 
-   * user (based on `Authentication` header) and the requested resource (represented by 
+   * The `calculateDistance` method tries retrieves the distance between an authenticated
+   * user (based on `Authentication` header) and the requested resource (represented by
    * `guid`).
    *
    * @param currentGUID a string representing the GUID of an authenticated user.
@@ -118,42 +117,30 @@ export class UsersController {
     return this.usersService.calculateDistanceBetweenGUIDs(currentGUID, remoteGUID);
   }
 
-  /**
-  * The `initAssociation` method initiates an association between an authenticated user
-  * (based on `Authentication` header) and the requested user resource (from URI).
-  *
-  * @param currentGUID a string representing the GUID of an authenticated user.
-  * @param remoteGUID a string representing the GUID of a user.
-  */
   @UseGuards(AuthGuard)
-  @Post(':guid/associations')
+  @Get('me/friendships')
   async initAssociation(
-    @Param('guid') remoteGUID: string,
     @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
   ): Promise<void> {
-    return this.usersAssociationService.init(currentGUID, remoteGUID);
+    return this.usersFriendshipService.get(currentGUID);
   }
 
-  /**
-  * The `modifyAssociation` method modifies an association between an authenticated user
-  * (based on `Authentication` header) and the requested user resource (from URI).
-  *
-  * @param updateAssociationDto an instance of `updateAssociationDto`.
-  * @param currentGUID a string representing the GUID of an authenticated user.
-  * @param remoteGUID a string representing the GUID of a user.
-  */
   @UseGuards(AuthGuard)
-  @Patch(':guid/association')
-  async modifyAssociation(
-    @Body() updateAssociationDto: UpdateAssociationDto,
-    @Param('guid') remoteGUID: string,
+  @Post('me/friendships')
+  async requestFriendship(
+    @Body() requestFriendshipDto: RequestFriendshipDto,
+    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+  ): Promise<any> {
+    return this.usersFriendshipService.request(currentGUID, requestFriendshipDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('me/friendships/:guid')
+  async updateFriendship(
+    @Body() updateFriendshipDto: UpdateFriendshipDto,
+    @Param('guid') friendshipGUID: string,
     @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
   ): Promise<void> {
-    if (updateAssociationDto.task == Tasks.ACCEPT) {
-      await this.usersAssociationService.update(Tasks.ACCEPT, currentGUID, remoteGUID);
-    }
-    if (updateAssociationDto.task == Tasks.REJECT) {
-      await this.usersAssociationService.update(Tasks.REJECT, currentGUID, remoteGUID);
-    }
+    await this.usersFriendshipService.update(friendshipGUID, updateFriendshipDto);
   }
 }

@@ -14,7 +14,6 @@ export class UserFullnameDto {
 }
 
 export class CreateUserDto {
-  @ApiProperty({required: false})
   @IsOptional()
   guid?: string;
 

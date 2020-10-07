@@ -1,2 +1,2 @@
 export const USERS: string = `users`;
-export const ASSOCIATIONS: string = `associations`;
+export const FRIENDSHIPS: string = `friendships`;

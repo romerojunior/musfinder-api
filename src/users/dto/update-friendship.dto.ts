@@ -1,10 +1,10 @@
 import { IsNotEmpty, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Tasks } from '../../common/enums';
+import { Statuses } from '../../common/enums';
 
-export class UpdateAssociationDto {
+export class UpdateFriendshipDto {
   @ApiProperty()
-  @IsEnum(Tasks)
+  @IsEnum(Statuses)
   @IsNotEmpty()
-  task: Tasks;
+  status: Statuses;
 }

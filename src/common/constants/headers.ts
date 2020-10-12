@@ -1,1 +1,0 @@
-export const AUTHENTICATED_USER_GUID: string = `authenticated_user_guid`;

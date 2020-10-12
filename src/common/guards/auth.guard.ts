@@ -1,6 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import * as firebase from 'firebase-admin';
-import { privateHeaders } from '../constants';
 import { isEmpty, replace } from 'lodash';
 
 @Injectable()
@@ -19,8 +18,7 @@ export class AuthGuard implements CanActivate {
     const token = replace(authorizationHeader ?? '', 'Bearer ', '');
 
     try {
-      const decodedIdToken = await firebase.auth().verifyIdToken(token);
-      request.headers[privateHeaders.AUTHENTICATED_USER_GUID] = decodedIdToken.user_id;
+      request.token = await firebase.auth().verifyIdToken(token);
       return true;
     } catch (err) {
       console.log(err.message);

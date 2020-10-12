@@ -49,7 +49,7 @@ export class UsersFriendshipService {
 
     let status: Statuses;
     if (updateFriendshipDto.status == Statuses.ACCEPTED) { status = Statuses.ACCEPTED };
-    if (updateFriendshipDto.status == Statuses.ACCEPTED) { status = Statuses.REJECTED };
+    if (updateFriendshipDto.status == Statuses.REJECTED) { status = Statuses.REJECTED };
 
     await this.fs.collection(collections.FRIENDSHIPS)
       .doc(friendshipGUID)
@@ -88,6 +88,12 @@ export class UsersFriendshipService {
     });
 
     return response;
+  }
+
+
+  async hasFriendship(userGUID: string, friendshipGUID: string): Promise<boolean> {
+    // to implement
+    return true
   }
 
 }

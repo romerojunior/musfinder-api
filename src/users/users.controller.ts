@@ -1,11 +1,11 @@
-import { Body, Controller, Post, Get, Param, UseGuards, Headers, Patch } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Patch, UnauthorizedException } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
 import { User, Error, Friendship } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { privateHeaders } from '../common/constants';
 import { UsersFriendshipService } from './services/users-friendship.service';
+import { UserToken } from './users.decorator';
 
 @ApiTags('users')
 @Controller('users')
@@ -33,7 +33,7 @@ export class UsersController {
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
-    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) guid: string,
+    @UserToken('user_id') guid: string,
   ): Promise<void> {
     await this.usersService.create(guid, createUserDto);
   }
@@ -110,32 +110,48 @@ export class UsersController {
   @Get(':guid/distance')
   async calculateDistance(
     @Param('guid') remoteGUID: string,
-    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+    @UserToken('user_id') guid: string,
   ): Promise<number> {
-    return this.usersService.calculateDistanceBetweenGUIDs(currentGUID, remoteGUID);
+    return this.usersService.calculateDistanceBetweenGUIDs(guid, remoteGUID);
   }
 
   @Get('me/friendships')
   async getFriendships(
-    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+    @UserToken('user_id') guid: string,
   ): Promise<Friendship[]> {
-    return this.usersFriendshipService.get(currentGUID);
+    return this.usersFriendshipService.get(guid);
   }
 
   @Post('me/friendships')
   async requestFriendship(
     @Body() requestFriendshipDto: RequestFriendshipDto,
-    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+    @UserToken('user_id') guid: string,
   ): Promise<any> {
-    return this.usersFriendshipService.request(currentGUID, requestFriendshipDto);
+    return this.usersFriendshipService.request(guid, requestFriendshipDto);
   }
 
   @Patch('me/friendships/:guid')
   async updateFriendship(
     @Body() updateFriendshipDto: UpdateFriendshipDto,
     @Param('guid') friendshipGUID: string,
-    @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
+    @UserToken('user_id') guid: string,
   ): Promise<void> {
-    await this.usersFriendshipService.update(friendshipGUID, updateFriendshipDto);
+    // the entire logic below should be considered as a service abstraction:
+    // does the friendship belongs to user?
+    if (await this.usersFriendshipService.hasFriendship(guid, friendshipGUID)) {
+      // if (friendship.from == guid) {
+      //   if (updateFriendshipDto.status == ACCEPT || REJECT) {
+      //      return update(friendshipGUID, updateFriendshipDto);
+      //   }
+      // } 
+      // 
+      // if (friendship.to == guid ) { 
+      //   if (updateFriendshipDto.status == REJECT) {
+      //      return update(friendshipGUID, updateFriendshipDto);
+      //   }
+      // }
+      return this.usersFriendshipService.update(friendshipGUID, updateFriendshipDto);
+    }
+    throw new UnauthorizedException();
   }
 }

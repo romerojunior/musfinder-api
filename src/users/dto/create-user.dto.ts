@@ -1,36 +1,17 @@
-import { IsNotEmpty, IsString, IsLatitude, IsLongitude, IsArray, ValidateNested, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export class UserFullnameDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  first: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  last: string;
-}
+import { FullNameDto, CoordinatesDto } from './common';
 
 export class CreateUserDto {
-  @IsOptional()
-  guid?: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  @ValidateNested()
+  name: FullNameDto;
 
   @ApiProperty()
   @IsNotEmpty()
   @ValidateNested()
-  name: UserFullnameDto;
-
-  @ApiProperty()
-  @IsLatitude()
-  @IsNotEmpty()
-  latitude: number;
-
-  @ApiProperty()
-  @IsLongitude()
-  @IsNotEmpty()
-  longitude: number;
+  coordinates: CoordinatesDto;
 
   @ApiProperty()
   @IsString()

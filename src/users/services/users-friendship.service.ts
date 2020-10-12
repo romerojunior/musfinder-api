@@ -5,6 +5,7 @@ import { Statuses } from '../../common/enums';
 import { UpdateFriendshipDto, RequestFriendshipDto } from '../dto';
 import * as firebase from 'firebase-admin';
 import { each, union } from 'lodash';
+import { Friendship } from '../models';
 
 @Injectable()
 export class UsersFriendshipService {
@@ -24,15 +25,16 @@ export class UsersFriendshipService {
     await this.usersService.get(fromUserGUID);
     await this.usersService.get(requestFriendshipDto.user);
 
-    const createdAt: FirebaseFirestore.Timestamp = firebase.firestore.Timestamp.fromDate(new Date());
+    const now = firebase.firestore.Timestamp.fromDate(new Date());
     const friendshipRef = this.fs.collection(collections.FRIENDSHIPS).doc();
 
     await friendshipRef.set({
-        from: fromUserGUID,
-        to: requestFriendshipDto.user,
-        status: Statuses.REQUESTED,
-        createdAt: createdAt,
-      });
+      from: fromUserGUID,
+      to: requestFriendshipDto.user,
+      status: Statuses.REQUESTED,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   /**
@@ -43,7 +45,7 @@ export class UsersFriendshipService {
    * @param friendshipGUID a string representing the GUID of a friendship.
    */
   async update(friendshipGUID: string, updateFriendshipDto: UpdateFriendshipDto): Promise<void> {
-    const updatedAt: FirebaseFirestore.Timestamp = firebase.firestore.Timestamp.fromDate(new Date());
+    const now = firebase.firestore.Timestamp.fromDate(new Date());
 
     let status: Statuses;
     if (updateFriendshipDto.status == Statuses.ACCEPTED) { status = Statuses.ACCEPTED };
@@ -53,7 +55,7 @@ export class UsersFriendshipService {
       .doc(friendshipGUID)
       .update({
         status: status,
-        updatedAt: updatedAt,
+        updatedAt: now,
       });
   }
 
@@ -63,18 +65,26 @@ export class UsersFriendshipService {
    *
    * @param userGUID
    */
-  async get(userGUID: string): Promise<any> {
+  async get(userGUID: string): Promise<Friendship[]> {
     const friendshipsRef = this.fs.collection(collections.FRIENDSHIPS);
 
     const from = await friendshipsRef.where('from', '==', userGUID).get();
     const to = await friendshipsRef.where('to', '==', userGUID).get();
 
-    const response: Array<any> = [];
+    const response: Array<Friendship> = [];
 
     each(union(from.docs, to.docs), doc => {
-      let data = doc.data();
-      data.guid = doc.id;
-      response.push(data);
+      const friendship: any = doc.data();
+      const createdAt = <FirebaseFirestore.Timestamp>friendship.createdAt;
+      const updatedAt = <FirebaseFirestore.Timestamp>friendship.updatedAt;
+      response.push({
+        createdAt: createdAt.toDate().toUTCString(),
+        updatedAt: updatedAt.toDate().toUTCString(),
+        guid: doc.id,
+        to: friendship.to,
+        from: friendship.from,
+        status: friendship.status,
+      })
     });
 
     return response;

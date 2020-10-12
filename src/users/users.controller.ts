@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Get, Param, UseGuards, Headers, Patch } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
-import { User, Error } from './models';
+import { User, Error, Friendship } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { privateHeaders } from '../common/constants';
@@ -9,6 +9,7 @@ import { UsersFriendshipService } from './services/users-friendship.service';
 
 @ApiTags('users')
 @Controller('users')
+@UseGuards(AuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -29,14 +30,12 @@ export class UsersController {
     description: 'Bad request.',
     type: Error,
   })
-  @UseGuards(AuthGuard)
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
     @Headers(privateHeaders.AUTHENTICATED_USER_GUID) guid: string,
   ): Promise<void> {
-    createUserDto.guid = guid;
-    return this.usersService.create(createUserDto);
+    await this.usersService.create(guid, createUserDto);
   }
 
   /**
@@ -108,7 +107,6 @@ export class UsersController {
     description: 'The requested resource could not be found.',
     type: Error,
   })
-  @UseGuards(AuthGuard)
   @Get(':guid/distance')
   async calculateDistance(
     @Param('guid') remoteGUID: string,
@@ -117,15 +115,13 @@ export class UsersController {
     return this.usersService.calculateDistanceBetweenGUIDs(currentGUID, remoteGUID);
   }
 
-  @UseGuards(AuthGuard)
   @Get('me/friendships')
-  async initAssociation(
+  async getFriendships(
     @Headers(privateHeaders.AUTHENTICATED_USER_GUID) currentGUID: string,
-  ): Promise<void> {
+  ): Promise<Friendship[]> {
     return this.usersFriendshipService.get(currentGUID);
   }
 
-  @UseGuards(AuthGuard)
   @Post('me/friendships')
   async requestFriendship(
     @Body() requestFriendshipDto: RequestFriendshipDto,
@@ -134,7 +130,6 @@ export class UsersController {
     return this.usersFriendshipService.request(currentGUID, requestFriendshipDto);
   }
 
-  @UseGuards(AuthGuard)
   @Patch('me/friendships/:guid')
   async updateFriendship(
     @Body() updateFriendshipDto: UpdateFriendshipDto,

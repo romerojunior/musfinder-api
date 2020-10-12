@@ -19,10 +19,11 @@ export class UsersService {
    * The `create` method takes an instance of `CreateUserDto` as an argument and creates
    * it in the persistency layer.
    *
+   * @param guid string representing the GUID of a user.
    * @param createUserDto An instance of `CreateUserDto`.
    */
-  async create(createUserDto: CreateUserDto): Promise<void> {
-    await this.geocollection.doc(createUserDto.guid).set({
+  async create(guid: string, createUserDto: CreateUserDto): Promise<void> {
+    await this.geocollection.doc(guid).set({
       name: {
         first: createUserDto.name.first,
         last: createUserDto.name.last
@@ -31,8 +32,8 @@ export class UsersService {
       genres: createUserDto.genres,
       instruments: createUserDto.instruments,
       coordinates: new firebase.firestore.GeoPoint(
-        createUserDto.latitude,
-        createUserDto.longitude
+        createUserDto.coordinates.latitude,
+        createUserDto.coordinates.longitude
       )
     });
   }
@@ -51,8 +52,8 @@ export class UsersService {
     const query = this.geocollection.near({
       radius: searchUserDto.radius,
       center: new firebase.firestore.GeoPoint(
-        searchUserDto.latitude,
-        searchUserDto.longitude
+        searchUserDto.coordinates.latitude,
+        searchUserDto.coordinates.longitude
       )
     });
 

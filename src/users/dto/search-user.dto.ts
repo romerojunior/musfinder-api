@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsLatitude, IsLongitude, IsInt, IsArray, IsOptional, ArrayMinSize } from 'class-validator';
+import { IsNotEmpty, ValidateNested, IsInt, IsArray, IsOptional, ArrayMinSize } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { CoordinatesDto } from './common';
 
 export class SearchUserDto {
   @ApiProperty()
@@ -8,14 +9,9 @@ export class SearchUserDto {
   radius: number;
 
   @ApiProperty()
-  @IsLatitude()
   @IsNotEmpty()
-  latitude: number;
-
-  @ApiProperty()
-  @IsLongitude()
-  @IsNotEmpty()
-  longitude: number;
+  @ValidateNested()
+  coordinates: CoordinatesDto;
 
   @ApiProperty({ required: false })
   @IsArray()

@@ -80,7 +80,7 @@ export class UsersFriendshipService {
    * The `request` method verifies if both users exist, if so, it will update the
    * collection with a representation of the association.
    *
-   * @param fromUserID a string representing the GUID of a user.
+   * @param fromUserID a string representing the guid of a user.
    * @param requestFriendshipDto an instance of `RequestFriendshipDto`.
    */
   async request(fromUserID: string, requestFriendshipDto: RequestFriendshipDto): Promise<void> {
@@ -140,7 +140,7 @@ export class UsersFriendshipService {
   }
 
   /**
-   * The `unfriend` method takes a userID and a friendshipID as arguments. If the userGUID 
+   * The `unfriend` method takes a userID and a friendshipID as arguments. If the userID 
    * is the same user who received or sent the friendship invitation, then the document 
    * representing the friendship entity will be purged.
    *

@@ -1,8 +1,8 @@
 import { Body, Controller, Post, Get, Param, UseGuards, Patch, Delete } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
-import { User, Error, Friendship } from './models';
-import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
+import { User, Friendship } from './models';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UsersFriendshipService } from './services/users-friendship.service';
 import { UserToken } from '../common/decorators';
@@ -120,10 +120,10 @@ export class UsersController {
   @Patch('me/friendships/:guid')
   async respondFriendship(
     @UserToken('user_id') userID: string,
-    @Param('guid') friendshipGUID: string,
+    @Param('guid') friendshipID: string,
     @Body() updateFriendshipDto: UpdateFriendshipDto,
   ): Promise<void> {
-    return this.usersFriendshipService.respond(userID, friendshipGUID, updateFriendshipDto);
+    return this.usersFriendshipService.respond(userID, friendshipID, updateFriendshipDto);
   }
 
   /**
@@ -136,8 +136,8 @@ export class UsersController {
   @Delete('me/friendships/:guid')
   async unfriend(
     @UserToken('user_id') userID: string,
-    @Param('guid') friendshipGUID: string,
+    @Param('guid') friendshipID: string,
   ): Promise<void> {
-    return this.usersFriendshipService.unfriend(userID, friendshipGUID);
+    return this.usersFriendshipService.unfriend(userID, friendshipID);
   }
 }

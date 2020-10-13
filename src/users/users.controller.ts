@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, UseGuards, Patch, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Patch, Delete } from '@nestjs/common';
 import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
 import { User, Error, Friendship } from './models';
@@ -119,7 +119,7 @@ export class UsersController {
   async getFriendships(
     @UserToken('user_id') guid: string,
   ): Promise<Friendship[]> {
-    return this.usersFriendshipService.get(guid);
+    return this.usersFriendshipService.getByUser(guid);
   }
 
   @Post('me/friendships')
@@ -131,27 +131,20 @@ export class UsersController {
   }
 
   @Patch('me/friendships/:guid')
-  async updateFriendship(
+  async respondFriendship(
     @Body() updateFriendshipDto: UpdateFriendshipDto,
     @Param('guid') friendshipGUID: string,
     @UserToken('user_id') guid: string,
   ): Promise<void> {
-    // the entire logic below should be considered as a service abstraction:
-    // does the friendship belongs to user?
-    if (await this.usersFriendshipService.hasFriendship(guid, friendshipGUID)) {
-      // if (friendship.from == guid) {
-      //   if (updateFriendshipDto.status == ACCEPT || REJECT) {
-      //      return update(friendshipGUID, updateFriendshipDto);
-      //   }
-      // } 
-      // 
-      // if (friendship.to == guid ) { 
-      //   if (updateFriendshipDto.status == REJECT) {
-      //      return update(friendshipGUID, updateFriendshipDto);
-      //   }
-      // }
-      return this.usersFriendshipService.update(friendshipGUID, updateFriendshipDto);
-    }
-    throw new UnauthorizedException();
+    return this.usersFriendshipService.respond(guid, friendshipGUID, updateFriendshipDto);
   }
+
+  // @Delete('me/friendships/:guid')
+  // async removeFriendship(
+  //   @Body() updateFriendshipDto: UpdateFriendshipDto,
+  //   @Param('guid') friendshipGUID: string,
+  //   @UserToken('user_id') guid: string,
+  // ): Promise<void> {
+  //   return this.usersFriendshipService.respond(guid, friendshipGUID, updateFriendshipDto);
+  // }
 }

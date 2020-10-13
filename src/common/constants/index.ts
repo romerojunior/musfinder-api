@@ -1,1 +1,1 @@
-export * as collections from './collections';
+export * as Collections from './collections';

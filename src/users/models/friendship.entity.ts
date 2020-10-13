@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import * as firebase from 'firebase-admin';
 
 export class Friendship {
   @ApiProperty()

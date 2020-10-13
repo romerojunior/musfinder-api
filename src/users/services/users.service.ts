@@ -3,7 +3,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { Geolocation, User } from '../models';
 import { SearchUserDto } from '../dto';
 import { each, intersection, isEmpty } from 'lodash';
-import { collections } from '../../common/constants';
+import { Collections } from '../../common/constants';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
 import * as geokit from 'geokit';
@@ -13,14 +13,14 @@ export class UsersService {
 
   private fs = firebase.firestore();
   private GeoFirestore = geofirestore.initializeApp(this.fs);
-  private geocollection = this.GeoFirestore.collection(collections.USERS);
+  private geocollection = this.GeoFirestore.collection(Collections.USERS);
 
   /**
    * The `create` method takes an instance of `CreateUserDto` as an argument and creates
    * it in the persistency layer.
    *
-   * @param guid string representing the GUID of a user.
-   * @param createUserDto An instance of `CreateUserDto`.
+   * @param guid a string representing the GUID of a user.
+   * @param createUserDto an instance of `CreateUserDto`.
    */
   async create(guid: string, createUserDto: CreateUserDto): Promise<void> {
     await this.geocollection.doc(guid).set({
@@ -44,9 +44,9 @@ export class UsersService {
    * `_.longitude`), it will then filter the results obtained from this geoquery using the
    * optional properties of `SearchUserDto` (`_.instruments` and `_.genres`).
    *
-   * @param searchUserDto An instance of `SearchUserDto`.
+   * @param searchUserDto an instance of `SearchUserDto`.
    *
-   * @returns A list of `User`.
+   * @returns a list of `User`.
    */
   async search(searchUserDto: SearchUserDto): Promise<User[]> {
     const query = this.geocollection.near({
@@ -89,14 +89,14 @@ export class UsersService {
    * The `get` method tries to fetch an user by its `_.guid` property, throwing a
    * `NotFoundException` in case the user cannot be found.
    *
-   * @param guid string representing the GUID of a user.
+   * @param guid an string representing the GUID of a user.
    *
-   * @returns An instance of `User`.
+   * @returns an instance of `User`.
    *
    * @throws {NotFoundException} If the GUID cannot be found.
    */
   async get(guid: string): Promise<User> {
-    const userRef = this.fs.collection(collections.USERS).doc(guid);
+    const userRef = this.fs.collection(Collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -121,14 +121,14 @@ export class UsersService {
    * throwing a `NotFoundException` in case the user cannot be found. The instance of
    * `User` returned by this method contains the `_.coordinates` property.
    *
-   * @param guid string representing the GUID of a user.
+   * @param guid a string representing the GUID of a user.
    *
-   * @returns An instance of `User`.
+   * @returns an instance of `User`.
    *
    * @throws {NotFoundException} If the GUID cannot be found.
    */
   async getWithGeolocation(guid: string): Promise<User> {
-    const userRef = this.fs.collection(collections.USERS).doc(guid);
+    const userRef = this.fs.collection(Collections.USERS).doc(guid);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -158,12 +158,12 @@ export class UsersService {
    * case it cannot find any. It then calculates the distance in kilometers between users
    * based on their `_.coordinates` property.
    *
-   * @param starUserGUID A string representing the GUID of a user.
-   * @param endUserGUID A string representing the GUID of a user.
+   * @param starUserGUID a string representing the GUID of a user.
+   * @param endUserGUID a string representing the GUID of a user.
    *
-   * @returns A number representing the distance in kilometers.
+   * @returns a number representing the distance in kilometers.
    *
-   * @throws {NotFoundException} If any of the GUIDs cannot be found.
+   * @throws {NotFoundException} if any of the GUIDs cannot be found.
    */
   async calculateDistanceBetweenGUIDs(starUserGUID: string, endUserGUID: string): Promise<number> {
     const starUser = await this.getWithGeolocation(starUserGUID);

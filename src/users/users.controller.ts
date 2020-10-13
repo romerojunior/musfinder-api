@@ -5,7 +5,7 @@ import { User, Error, Friendship } from './models';
 import { ApiTags, ApiNotFoundResponse, ApiOkResponse, ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UsersFriendshipService } from './services/users-friendship.service';
-import { UserToken } from './users.decorator';
+import { UserToken } from '../common/decorators';
 
 @ApiTags('users')
 @Controller('users')

@@ -1,0 +1,1 @@
+export { UserToken } from './user-token.decorator';

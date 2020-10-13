@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Collections } from '../../common/constants';
@@ -10,22 +10,22 @@ import * as firebase from 'firebase-admin';
 
 @Injectable()
 export class UsersFriendshipService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   private fs = firebase.firestore();
 
   /**
-   * The `get` method takes `friendshipGUID` as argument and returns an object
-   * representing the friendship entity.
+   * The `get` method takes `friendshipID` as argument and returns an object representing 
+   * the friendship entity.
    *
-   * @param friendshipGUID a string representing the GUID of a friendship.
+   * @param friendshipID a string representing the guid of a friendship.
    *
    * @returns an instance of `Friendship`.
    *
-   * @throws {NotFoundException} if `friendshipGUID` cannot be found.
+   * @throws {NotFoundException} if `friendshipID` cannot be found.
    */
-  async get(friendshipGUID: string): Promise<Friendship> {
-    const docRef = this.fs.collection(Collections.FRIENDSHIPS).doc(friendshipGUID);
+  async get(friendshipID: string): Promise<Friendship> {
+    const docRef = this.fs.collection(Collections.FRIENDSHIPS).doc(friendshipID);
 
     const friendshipDoc = await docRef.get();
     if (!friendshipDoc.exists) {
@@ -44,18 +44,18 @@ export class UsersFriendshipService {
   }
 
   /**
-   * The `getByUser` method takes `userGUID` as argument and returns an object
-   * representing an array of friendship entities.
+   * The `getByUser` method takes `userID` as argument and returns an object
+   * representing an array of Friendship model.
    *
-   * @param userGUID a string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
    *
    * @returns an array of `Friendship` instances.
    */
-  async getByUser(userGUID: string): Promise<Friendship[]> {
+  async getByUser(userID: string): Promise<Friendship[]> {
     const colRef = this.fs.collection(Collections.FRIENDSHIPS);
 
-    const from = await colRef.where('from', '==', userGUID).get();
-    const to = await colRef.where('to', '==', userGUID).get();
+    const from = await colRef.where('from', '==', userID).get();
+    const to = await colRef.where('to', '==', userID).get();
 
     const response: Array<Friendship> = [];
 
@@ -80,18 +80,16 @@ export class UsersFriendshipService {
    * The `request` method verifies if both users exist, if so, it will update the
    * collection with a representation of the association.
    *
-   * @param fromUserGUID a string representing the GUID of a user.
-   * @param toUserGUID a string representing the GUID of a user.
-   *
-   * @returns {string} a string representing the GUID of the new friendship.
+   * @param fromUserID a string representing the GUID of a user.
+   * @param requestFriendshipDto an instance of `RequestFriendshipDto`.
    */
-  async request(fromUserGUID: string, requestFriendshipDto: RequestFriendshipDto): Promise<void> {
-    await this.usersService.get(fromUserGUID);
+  async request(fromUserID: string, requestFriendshipDto: RequestFriendshipDto): Promise<void> {
+    await this.usersService.get(fromUserID);
     await this.usersService.get(requestFriendshipDto.user);
 
     const colRef = this.fs.collection(Collections.FRIENDSHIPS);
-    const fromTo = await colRef.where('from', '==', fromUserGUID).where('to', '==', requestFriendshipDto.user).get();
-    const toFrom = await colRef.where('to', '==', fromUserGUID).where('from', '==', requestFriendshipDto.user).get();
+    const fromTo = await colRef.where('from', '==', fromUserID).where('to', '==', requestFriendshipDto.user).get();
+    const toFrom = await colRef.where('to', '==', fromUserID).where('from', '==', requestFriendshipDto.user).get();
 
     if (union(fromTo.docs, toFrom.docs).length > 0) {
       throw new ConflictException();
@@ -101,7 +99,7 @@ export class UsersFriendshipService {
     const docRef = this.fs.collection(Collections.FRIENDSHIPS).doc();
 
     await docRef.set({
-      from: fromUserGUID,
+      from: fromUserID,
       to: requestFriendshipDto.user,
       status: Statuses.REQUESTED,
       createdAt: now,
@@ -110,31 +108,31 @@ export class UsersFriendshipService {
   }
 
   /**
-   * The `respond` method takes an authenticated userGUID, a friendshipGUID and
-   * an updateFriendshipDto as arguments. If the userGUID is the same user who
-   * received the friendship invitation, then the `updateFriendshipDto` will be
-   * considered, else a `UnauthorizedException` is thrown.
+   * The `respond` method takes an authenticated userID, a friendshipID and an instance of
+   * `UpdateFriendshipDto` as arguments. If the userID is the same user who received the 
+   * friendship invitation, then the `updateFriendshipDto` will be considered, else a 
+   * `UnauthorizedException` is thrown.
    *
-   * @param userGUID a string representing the GUID of a user.
-   * @param friendshipGUID a string representing the GUID of a friendship.
+   * @param userID a string representing the guid of a user.
+   * @param friendshipID a string representing the guid of a friendship.
    * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
    *
-   * @throws {UnauthorizedException} if it does not match the conditions.
+   * @throws {UnauthorizedException} if it does not match the business conditions.
    */
-  async respond(userGUID: string, friendshipGUID: string, updateFriendshipDto: UpdateFriendshipDto): Promise<void> {
+  async respond(userID: string, friendshipID: string, updateFriendshipDto: UpdateFriendshipDto): Promise<void> {
     const now = firebase.firestore.Timestamp.fromDate(new Date());
-    const friendship = await this.get(friendshipGUID);
+    const friendship = await this.get(friendshipID);
 
-    let update: boolean = (friendship.to == userGUID) && (
-        (updateFriendshipDto.status == Statuses.ACCEPTED) ||
-        (updateFriendshipDto.status == Statuses.REJECTED)
-      )
+    let update: boolean = (friendship.to == userID) && (
+      (updateFriendshipDto.status == Statuses.ACCEPTED) ||
+      (updateFriendshipDto.status == Statuses.REJECTED)
+    )
     if (!update) {
       throw new UnauthorizedException();
     }
 
     await this.fs.collection(Collections.FRIENDSHIPS)
-      .doc(friendshipGUID)
+      .doc(friendshipID)
       .update({
         status: updateFriendshipDto.status,
         updatedAt: now,
@@ -142,20 +140,19 @@ export class UsersFriendshipService {
   }
 
   /**
-   * The `unfriend` method takes an authenticated userGUID and a friendshipGUID
-   * as arguments. If the userGUID is the same user who received or sent the
-   * friendship invitation, then the document representing the friendship entity
-   * will be purged.
+   * The `unfriend` method takes a userID and a friendshipID as arguments. If the userGUID 
+   * is the same user who received or sent the friendship invitation, then the document 
+   * representing the friendship entity will be purged.
    *
-   * @param userGUID a string representing the GUID of a user.
-   * @param friendshipGUID a string representing the GUID of a friendship.
+   * @param userID a string representing the guid of a user.
+   * @param friendshipID a string representing the guid of a friendship.
    *
-   * @throws {UnauthorizedException} if it does not match the conditions.
+   * @throws {UnauthorizedException} if it does not match the business conditions.
    */
-  async unfriend(userGUID: string, friendshipGUID: string): Promise<void> {
-    const friendship = await this.get(friendshipGUID);
-    if ((friendship.to == userGUID) || (friendship.from == userGUID)) {
-      await this.fs.collection(Collections.FRIENDSHIPS).doc(friendshipGUID).delete();
+  async unfriend(userID: string, friendshipID: string): Promise<void> {
+    const friendship = await this.get(friendshipID);
+    if ((friendship.to == userID) || (friendship.from == userID)) {
+      await this.fs.collection(Collections.FRIENDSHIPS).doc(friendshipID).delete();
     } else {
       throw new UnauthorizedException();
     }

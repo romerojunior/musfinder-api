@@ -19,11 +19,11 @@ export class UsersService {
    * The `create` method takes an instance of `CreateUserDto` as an argument and creates
    * it in the persistency layer.
    *
-   * @param guid a string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
    * @param createUserDto an instance of `CreateUserDto`.
    */
-  async create(guid: string, createUserDto: CreateUserDto): Promise<void> {
-    await this.geocollection.doc(guid).set({
+  async create(userID: string, createUserDto: CreateUserDto): Promise<void> {
+    await this.geocollection.doc(userID).set({
       name: {
         first: createUserDto.name.first,
         last: createUserDto.name.last
@@ -89,14 +89,14 @@ export class UsersService {
    * The `get` method tries to fetch an user by its `_.guid` property, throwing a
    * `NotFoundException` in case the user cannot be found.
    *
-   * @param guid an string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
    *
    * @returns an instance of `User`.
    *
-   * @throws {NotFoundException} If the GUID cannot be found.
+   * @throws {NotFoundException} if the guid cannot be found.
    */
-  async get(guid: string): Promise<User> {
-    const userRef = this.fs.collection(Collections.USERS).doc(guid);
+  async get(userID: string): Promise<User> {
+    const userRef = this.fs.collection(Collections.USERS).doc(userID);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -121,14 +121,14 @@ export class UsersService {
    * throwing a `NotFoundException` in case the user cannot be found. The instance of
    * `User` returned by this method contains the `_.coordinates` property.
    *
-   * @param guid a string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
    *
    * @returns an instance of `User`.
    *
-   * @throws {NotFoundException} If the GUID cannot be found.
+   * @throws {NotFoundException} if the guid cannot be found.
    */
-  async getWithGeolocation(guid: string): Promise<User> {
-    const userRef = this.fs.collection(Collections.USERS).doc(guid);
+  async getWithGeolocation(userID: string): Promise<User> {
+    const userRef = this.fs.collection(Collections.USERS).doc(userID);
 
     const user = await userRef.get();
     if (!user.exists) {
@@ -153,25 +153,25 @@ export class UsersService {
   }
 
   /**
-   * The `calculateDistanceBetweenGUIDs` method tries to fetch both users identified by
-   * the arguments `startUserGUID` and `endUserGUID`, throwing a `NotFoundException` in
+   * The `calculateDistanceBetweenIDs` method tries to fetch both users identified by
+   * the arguments `starUserID` and `endUserID`, throwing a `NotFoundException` in
    * case it cannot find any. It then calculates the distance in kilometers between users
    * based on their `_.coordinates` property.
    *
-   * @param starUserGUID a string representing the GUID of a user.
-   * @param endUserGUID a string representing the GUID of a user.
+   * @param starUserID a string representing the guid of a user.
+   * @param endUserID a string representing the guid of a user.
    *
-   * @returns a number representing the distance in kilometers.
+   * @returns the distance in kilometers.
    *
-   * @throws {NotFoundException} if any of the GUIDs cannot be found.
+   * @throws {NotFoundException} if any of the guid cannot be found.
    */
-  async calculateDistanceBetweenGUIDs(starUserGUID: string, endUserGUID: string): Promise<number> {
-    const starUser = await this.getWithGeolocation(starUserGUID);
+  async calculateDistanceBetweenIDs(starUserID: string, endUserID: string): Promise<number> {
+    const starUser = await this.getWithGeolocation(starUserID);
     if (!starUser) {
       throw new NotFoundException();
     }
 
-    const endUser = await this.getWithGeolocation(endUserGUID);
+    const endUser = await this.getWithGeolocation(endUserID);
     if (!endUser) {
       throw new NotFoundException();
     }

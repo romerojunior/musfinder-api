@@ -17,48 +17,28 @@ export class UsersController {
   ) { }
 
   /**
-   * The `create` method takes an instance of `CreateUserDto` via the body of an
-   * authenticated request and calls the user service to finally persist it.
+   * The `create` method takes an instance of `CreateUserDto` as argument and calls the 
+   * user service to finally persist it.
    *
-   * @param createUserDto an instance of `CreateUserDto` representing an user.
-   * @param guid a string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
+   * @param createUserDto an instance of `CreateUserDto`.
    */
-  @ApiCreatedResponse({
-    description: 'User has been created.'
-  })
-  @ApiBadRequestResponse({
-    description: 'Bad request.',
-    type: Error,
-  })
   @Post()
   async create(
+    @UserToken('user_id') userID: string,
     @Body() createUserDto: CreateUserDto,
-    @UserToken('user_id') guid: string,
   ): Promise<void> {
-    await this.usersService.create(guid, createUserDto);
+    await this.usersService.create(userID, createUserDto);
   }
 
   /**
-   * The `search` method takes an instance of `SearchUserDto` via the body of an
-   * authenticated request (based on `Authentication` header) and returns a list of users
-   * matching the `SearchUserDto` criterias.
+   * The `search` method takes an instance of `SearchUserDto` as argument and returns a 
+   * list of users matching the `SearchUserDto` criterias.
    *
    * @param searchUserDto an instance of `searchUserDto` representing all search criterias.
    *
    * @returns a list of `Users`.
    */
-  @ApiOkResponse({
-    description: 'User has been found.',
-    type: [User],
-  })
-  @ApiNotFoundResponse({
-    description: 'Geolocation not found.',
-    type: Error,
-  })
-  @ApiBadRequestResponse({
-    description: 'Bad request.',
-    type: Error,
-  })
   @Get('search')
   async search(
     @Body() searchUserDto: SearchUserDto
@@ -67,83 +47,97 @@ export class UsersController {
   }
 
   /**
-   * The `getUser` method tries to retrieve a user resource by its GUID.
+   * The `getUser` method takes a user id (`guid`) as argument and tries to retrieve a 
+   * user that matches with it.
    *
-   * @param guid a string representing the GUID of a user.
-   * @param remoteGUID a string representing the GUID of a user.
+   * @param userID a string representing the guid of a user.
    *
    * @returns a `User` representing requested resource.
    */
-  @ApiOkResponse({
-    description: 'User has been found.',
-    type: User,
-  })
-  @ApiNotFoundResponse({
-    description: 'User not found.',
-    type: Error,
-  })
-  @Get(':guid')
+  @Get(':userID')
   async getUser(
-    @Param('guid') guid: string,
+    @Param('userID') userID: string,
   ): Promise<User> {
-    return this.usersService.get(guid);
+    return this.usersService.get(userID);
   }
 
   /**
-   * The `calculateDistance` method tries retrieves the distance between an authenticated
-   * user (based on `Authentication` header) and the requested resource (represented by
-   * `guid`).
+   * The `calculateDistance` method takes two user ids as arguments and returns the
+   * geographical distance between their coordinates.
    *
-   * @param currentGUID a string representing the GUID of an authenticated user.
-   * @param remoteGUID a string representing the GUID of a user.
+   * @param currentUserID a string representing the guid of a user.
+   * @param remoteUserID a string representing the guid of a user.
    *
    * @returns a `number` representing the distance in kilometers.
    */
-  @ApiOkResponse({
-    description: 'The distance in kilometers between authorized request and resource.',
-    type: Number,
-  })
-  @ApiNotFoundResponse({
-    description: 'The requested resource could not be found.',
-    type: Error,
-  })
   @Get(':guid/distance')
   async calculateDistance(
-    @Param('guid') remoteGUID: string,
-    @UserToken('user_id') guid: string,
+    @UserToken('user_id') currentUserID: string,
+    @Param('guid') remoteUserID: string,
   ): Promise<number> {
-    return this.usersService.calculateDistanceBetweenGUIDs(guid, remoteGUID);
+    return this.usersService.calculateDistanceBetweenIDs(currentUserID, remoteUserID);
   }
 
+  /**
+   * The `getFriendships` method takes a user id as argument and returns a list of
+   * `Friendship` instances related to this user.
+   *
+   * @param userID a string representing the guid of a user.
+   *
+   * @returns a list of `Friendship` instances.
+   */
   @Get('me/friendships')
   async getFriendships(
-    @UserToken('user_id') guid: string,
+    @UserToken('user_id') userID: string,
   ): Promise<Friendship[]> {
-    return this.usersFriendshipService.getByUser(guid);
+    return this.usersFriendshipService.getByUser(userID);
   }
 
+  /**
+   * The `requestFriendship` method takes a user id as argument and an instance of 
+   * `RequestFriendshipDto`, it then initiates a friendship request based on 
+   * `requestFriendshipDto` criterias in behalf of `userID`.
+   *
+   * @param userID a string representing the guid of a user.
+   * @param requestFriendshipDto an instance of `RequestFriendshipDto`.
+   */
   @Post('me/friendships')
   async requestFriendship(
+    @UserToken('user_id') userID: string,
     @Body() requestFriendshipDto: RequestFriendshipDto,
-    @UserToken('user_id') guid: string,
-  ): Promise<any> {
-    return this.usersFriendshipService.request(guid, requestFriendshipDto);
+  ): Promise<void> {
+    return this.usersFriendshipService.request(userID, requestFriendshipDto);
   }
 
+  /**
+   * The `respondFriendship` method takes a user id, a friendship id, and an instance of
+   * `UpdateFriendshipDto` as arguments, it then takes the actions from 
+   * `requestFriendshipDto` in behalf of `userID`.
+   *
+   * @param userID a string representing the guid of a user.
+   * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
+   */
   @Patch('me/friendships/:guid')
   async respondFriendship(
-    @Body() updateFriendshipDto: UpdateFriendshipDto,
+    @UserToken('user_id') userID: string,
     @Param('guid') friendshipGUID: string,
-    @UserToken('user_id') guid: string,
+    @Body() updateFriendshipDto: UpdateFriendshipDto,
   ): Promise<void> {
-    return this.usersFriendshipService.respond(guid, friendshipGUID, updateFriendshipDto);
+    return this.usersFriendshipService.respond(userID, friendshipGUID, updateFriendshipDto);
   }
 
+  /**
+   * The `unfriend` method takes a user id and a friendship id as arguments. It then
+   * deletes the friendship association in behalf of `userID`.
+   *
+   * @param userID a string representing the guid of a user.
+   * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
+   */
   @Delete('me/friendships/:guid')
   async unfriend(
+    @UserToken('user_id') userID: string,
     @Param('guid') friendshipGUID: string,
-    @UserToken('user_id') guid: string,
   ): Promise<void> {
-    return this.usersFriendshipService.unfriend(guid, friendshipGUID);
+    return this.usersFriendshipService.unfriend(userID, friendshipGUID);
   }
 }

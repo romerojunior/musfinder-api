@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserFullname } from './userfullname.entity';
-import { Geolocation } from './geolocation.entity';
+import { UserFullname } from './userfullname.model';
+import { Geolocation } from './geolocation.model';
 
 export class User {
   @ApiProperty()

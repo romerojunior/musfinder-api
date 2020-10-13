@@ -119,7 +119,7 @@ export class UsersFriendshipService {
    * @param friendshipGUID a string representing the GUID of a friendship.
    * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
    *
-   * @throws {UnauthorizedException} if it does not match conditions.
+   * @throws {UnauthorizedException} if it does not match the conditions.
    */
   async respond(userGUID: string, friendshipGUID: string, updateFriendshipDto: UpdateFriendshipDto): Promise<void> {
     const now = firebase.firestore.Timestamp.fromDate(new Date());
@@ -139,5 +139,25 @@ export class UsersFriendshipService {
         status: updateFriendshipDto.status,
         updatedAt: now,
       });
+  }
+
+  /**
+   * The `unfriend` method takes an authenticated userGUID and a friendshipGUID
+   * as arguments. If the userGUID is the same user who received or sent the
+   * friendship invitation, then the document representing the friendship entity
+   * will be purged.
+   *
+   * @param userGUID a string representing the GUID of a user.
+   * @param friendshipGUID a string representing the GUID of a friendship.
+   *
+   * @throws {UnauthorizedException} if it does not match the conditions.
+   */
+  async unfriend(userGUID: string, friendshipGUID: string): Promise<void> {
+    const friendship = await this.get(friendshipGUID);
+    if ((friendship.to == userGUID) || (friendship.from == userGUID)) {
+      await this.fs.collection(Collections.FRIENDSHIPS).doc(friendshipGUID).delete();
+    } else {
+      throw new UnauthorizedException();
+    }
   }
 }

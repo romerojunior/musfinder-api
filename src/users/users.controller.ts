@@ -139,12 +139,11 @@ export class UsersController {
     return this.usersFriendshipService.respond(guid, friendshipGUID, updateFriendshipDto);
   }
 
-  // @Delete('me/friendships/:guid')
-  // async removeFriendship(
-  //   @Body() updateFriendshipDto: UpdateFriendshipDto,
-  //   @Param('guid') friendshipGUID: string,
-  //   @UserToken('user_id') guid: string,
-  // ): Promise<void> {
-  //   return this.usersFriendshipService.respond(guid, friendshipGUID, updateFriendshipDto);
-  // }
+  @Delete('me/friendships/:guid')
+  async unfriend(
+    @Param('guid') friendshipGUID: string,
+    @UserToken('user_id') guid: string,
+  ): Promise<void> {
+    return this.usersFriendshipService.unfriend(guid, friendshipGUID);
+  }
 }

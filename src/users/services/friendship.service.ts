@@ -9,13 +9,13 @@ import { Friendship } from '../models';
 import * as firebase from 'firebase-admin';
 
 @Injectable()
-export class UsersFriendshipService {
+export class FriendshipService {
   constructor(private readonly usersService: UsersService) { }
 
   private fs = firebase.firestore();
 
   /**
-   * The `get` method takes `friendshipID` as argument and returns an object representing 
+   * The `get` method takes `friendshipID` as argument and returns an object representing
    * the friendship entity.
    *
    * @param friendshipID a string representing the guid of a friendship.
@@ -109,8 +109,8 @@ export class UsersFriendshipService {
 
   /**
    * The `respond` method takes an authenticated userID, a friendshipID and an instance of
-   * `UpdateFriendshipDto` as arguments. If the userID is the same user who received the 
-   * friendship invitation, then the `updateFriendshipDto` will be considered, else a 
+   * `UpdateFriendshipDto` as arguments. If the userID is the same user who received the
+   * friendship invitation, then the `updateFriendshipDto` will be considered, else a
    * `UnauthorizedException` is thrown.
    *
    * @param userID a string representing the guid of a user.
@@ -140,8 +140,8 @@ export class UsersFriendshipService {
   }
 
   /**
-   * The `unfriend` method takes a userID and a friendshipID as arguments. If the userID 
-   * is the same user who received or sent the friendship invitation, then the document 
+   * The `unfriend` method takes a userID and a friendshipID as arguments. If the userID
+   * is the same user who received or sent the friendship invitation, then the document
    * representing the friendship entity will be purged.
    *
    * @param userID a string representing the guid of a user.

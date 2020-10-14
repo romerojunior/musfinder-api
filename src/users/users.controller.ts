@@ -4,7 +4,7 @@ import { UsersService } from './services/users.service';
 import { User, Friendship } from './models';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { UsersFriendshipService } from './services/users-friendship.service';
+import { FriendshipService } from './services/friendship.service';
 import { UserToken } from '../common/decorators';
 
 @ApiTags('users')
@@ -13,11 +13,11 @@ import { UserToken } from '../common/decorators';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly usersFriendshipService: UsersFriendshipService,
+    private readonly friendshipService: FriendshipService,
   ) { }
 
   /**
-   * The `create` method takes an instance of `CreateUserDto` as argument and calls the 
+   * The `create` method takes an instance of `CreateUserDto` as argument and calls the
    * user service to finally persist it.
    *
    * @param userID a string representing the guid of a user.
@@ -32,7 +32,7 @@ export class UsersController {
   }
 
   /**
-   * The `search` method takes an instance of `SearchUserDto` as argument and returns a 
+   * The `search` method takes an instance of `SearchUserDto` as argument and returns a
    * list of users matching the `SearchUserDto` criterias.
    *
    * @param searchUserDto an instance of `searchUserDto` representing all search criterias.
@@ -47,16 +47,16 @@ export class UsersController {
   }
 
   /**
-   * The `getUser` method takes a user id (`guid`) as argument and tries to retrieve a 
+   * The `getUser` method takes a user id (`guid`) as argument and tries to retrieve a
    * user that matches with it.
    *
    * @param userID a string representing the guid of a user.
    *
    * @returns a `User` representing requested resource.
    */
-  @Get(':userID')
+  @Get(':guid')
   async getUser(
-    @Param('userID') userID: string,
+    @Param('guid') userID: string,
   ): Promise<User> {
     return this.usersService.get(userID);
   }
@@ -90,12 +90,12 @@ export class UsersController {
   async getFriendships(
     @UserToken('user_id') userID: string,
   ): Promise<Friendship[]> {
-    return this.usersFriendshipService.getByUser(userID);
+    return this.friendshipService.getByUser(userID);
   }
 
   /**
-   * The `requestFriendship` method takes a user id as argument and an instance of 
-   * `RequestFriendshipDto`, it then initiates a friendship request based on 
+   * The `requestFriendship` method takes a user id as argument and an instance of
+   * `RequestFriendshipDto`, it then initiates a friendship request based on
    * `requestFriendshipDto` criterias in behalf of `userID`.
    *
    * @param userID a string representing the guid of a user.
@@ -106,12 +106,12 @@ export class UsersController {
     @UserToken('user_id') userID: string,
     @Body() requestFriendshipDto: RequestFriendshipDto,
   ): Promise<void> {
-    return this.usersFriendshipService.request(userID, requestFriendshipDto);
+    return this.friendshipService.request(userID, requestFriendshipDto);
   }
 
   /**
    * The `respondFriendship` method takes a user id, a friendship id, and an instance of
-   * `UpdateFriendshipDto` as arguments, it then takes the actions from 
+   * `UpdateFriendshipDto` as arguments, it then takes the actions from
    * `requestFriendshipDto` in behalf of `userID`.
    *
    * @param userID a string representing the guid of a user.
@@ -123,7 +123,7 @@ export class UsersController {
     @Param('guid') friendshipID: string,
     @Body() updateFriendshipDto: UpdateFriendshipDto,
   ): Promise<void> {
-    return this.usersFriendshipService.respond(userID, friendshipID, updateFriendshipDto);
+    return this.friendshipService.respond(userID, friendshipID, updateFriendshipDto);
   }
 
   /**
@@ -138,6 +138,6 @@ export class UsersController {
     @UserToken('user_id') userID: string,
     @Param('guid') friendshipID: string,
   ): Promise<void> {
-    return this.usersFriendshipService.unfriend(userID, friendshipID);
+    return this.friendshipService.unfriend(userID, friendshipID);
   }
 }

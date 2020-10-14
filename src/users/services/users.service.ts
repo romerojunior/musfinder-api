@@ -103,7 +103,7 @@ export class UsersService {
       throw new NotFoundException();
     }
 
-    const data = user.data();
+    const data: any = user.data();
     return <User>{
       guid: userRef.id,
       name: {
@@ -135,7 +135,7 @@ export class UsersService {
       throw new NotFoundException();
     }
 
-    const data = user.data();
+    const data: any = user.data();
     return <User>{
       guid: userRef.id,
       name: {

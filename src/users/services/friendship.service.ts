@@ -32,7 +32,7 @@ export class FriendshipService {
       throw new NotFoundException();
     }
 
-    const data = friendshipDoc.data();
+    const data: any = friendshipDoc.data();
     return <Friendship>{
       guid: docRef.id,
       status: data.status,

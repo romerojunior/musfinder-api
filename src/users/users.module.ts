@@ -7,5 +7,6 @@ import { FriendshipService } from './services/friendship.service';
   imports: [],
   controllers: [UsersController],
   providers: [UsersService, FriendshipService],
+  exports: [UsersService]
 })
-export class UsersModule {}
+export class UsersModule { }

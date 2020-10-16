@@ -3,7 +3,7 @@ import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Collections } from '../../common/constants';
 import { Statuses } from '../../common/enums';
-import { UpdateFriendshipDto, RequestFriendshipDto } from '../dto';
+import { RespondFriendshipDto, RequestFriendshipDto } from '../dto';
 import { each, union } from 'lodash';
 import { Friendship } from '../models';
 import * as firebase from 'firebase-admin';
@@ -54,12 +54,12 @@ export class FriendshipService {
   async getByUser(userID: string): Promise<Friendship[]> {
     const colRef = this.fs.collection(Collections.FRIENDSHIPS);
 
-    const from = await colRef.where('from', '==', userID).get();
-    const to = await colRef.where('to', '==', userID).get();
+    const fromDocRef = await colRef.where('from', '==', userID).get();
+    const toDocRef = await colRef.where('to', '==', userID).get();
 
     const response: Array<Friendship> = [];
 
-    each(union(from.docs, to.docs), doc => {
+    each(union(fromDocRef.docs, toDocRef.docs), doc => {
       const friendship: any = doc.data();
       const createdAt = <FirebaseFirestore.Timestamp>friendship.createdAt;
       const updatedAt = <FirebaseFirestore.Timestamp>friendship.updatedAt;
@@ -110,22 +110,22 @@ export class FriendshipService {
   /**
    * The `respond` method takes an authenticated userID, a friendshipID and an instance of
    * `UpdateFriendshipDto` as arguments. If the userID is the same user who received the
-   * friendship invitation, then the `updateFriendshipDto` will be considered, else a
+   * friendship invitation, then the `respondFriendshipDto` will be considered, else a
    * `UnauthorizedException` is thrown.
    *
    * @param userID a string representing the guid of a user.
    * @param friendshipID a string representing the guid of a friendship.
-   * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
+   * @param respondFriendshipDto an instance of `UpdateFriendshipDto`.
    *
    * @throws {UnauthorizedException} if it does not match the business conditions.
    */
-  async respond(userID: string, friendshipID: string, updateFriendshipDto: UpdateFriendshipDto): Promise<void> {
+  async respond(userID: string, friendshipID: string, respondFriendshipDto: RespondFriendshipDto): Promise<void> {
     const now = firebase.firestore.Timestamp.fromDate(new Date());
     const friendship = await this.get(friendshipID);
 
     let update: boolean = (friendship.to == userID) && (
-      (updateFriendshipDto.status == Statuses.ACCEPTED) ||
-      (updateFriendshipDto.status == Statuses.REJECTED)
+      (respondFriendshipDto.status == Statuses.ACCEPTED) ||
+      (respondFriendshipDto.status == Statuses.REJECTED)
     )
     if (!update) {
       throw new UnauthorizedException();
@@ -134,7 +134,7 @@ export class FriendshipService {
     await this.fs.collection(Collections.FRIENDSHIPS)
       .doc(friendshipID)
       .update({
-        status: updateFriendshipDto.status,
+        status: respondFriendshipDto.status,
         updatedAt: now,
       });
   }

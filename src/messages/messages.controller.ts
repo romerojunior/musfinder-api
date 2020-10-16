@@ -13,8 +13,8 @@ export class MessagesController {
   @Get(':guid')
   async get(
     @Param('guid') messageID: string,
-  ): Promise<Message> {
-    return this.messagesService.getOne(messageID);
+  ): Promise<any> {
+    return this.messagesService.getLatest("1");
   }
 
 }

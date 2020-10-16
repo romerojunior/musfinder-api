@@ -21,4 +21,7 @@ export class Message {
 
   @ApiProperty()
   readAt: string;
+
+  @ApiProperty()
+  isRead: string;
 }

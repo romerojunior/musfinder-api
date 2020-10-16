@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Get, Param, UseGuards, Patch, Delete } from '@nestjs/common';
-import { SearchUserDto, CreateUserDto, UpdateFriendshipDto, RequestFriendshipDto } from './dto';
+import { SearchUserDto, CreateUserDto, RespondFriendshipDto, RequestFriendshipDto } from './dto';
 import { UsersService } from './services/users.service';
 import { User, Friendship } from './models';
 import { ApiTags } from '@nestjs/swagger';
@@ -115,15 +115,15 @@ export class UsersController {
    * `requestFriendshipDto` in behalf of `userID`.
    *
    * @param userID a string representing the guid of a user.
-   * @param updateFriendshipDto an instance of `UpdateFriendshipDto`.
+   * @param respondFriendshipDto an instance of `UpdateFriendshipDto`.
    */
   @Patch('me/friendships/:guid')
   async respondFriendship(
     @UserToken('user_id') userID: string,
     @Param('guid') friendshipID: string,
-    @Body() updateFriendshipDto: UpdateFriendshipDto,
+    @Body() respondFriendshipDto: RespondFriendshipDto,
   ): Promise<void> {
-    return this.friendshipService.respond(userID, friendshipID, updateFriendshipDto);
+    return this.friendshipService.respond(userID, friendshipID, respondFriendshipDto);
   }
 
   /**

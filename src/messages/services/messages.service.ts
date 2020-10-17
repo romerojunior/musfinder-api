@@ -28,28 +28,26 @@ export class MessagesService {
       content: data.content,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-      readAt: data.readAt,
-      isRead: data.isRead
+      readAt: data.readAt
     }
   }
 
-  async send(message: SendMessageDto): Promise<void> {
+  async send(fromID: string, sendMessageDto: SendMessageDto): Promise<void> {
+    await this.usersService.get(sendMessageDto.to);
     const now = firebase.firestore.Timestamp.fromDate(new Date());
 
     await this.fs.collection(Collections.MESSAGES).doc().set({
-      to: message.to,
-      from: message.from,
-      content: message.content,
+      from: fromID,
+      to: sendMessageDto.to,
+      content: sendMessageDto.content,
       createdAt: now,
-      isRead: false,
     });
   }
 
   async markAsRead(messageID: string): Promise<void> {
     try {
-      await this.fs.collection(Collections.MESSAGES).doc(messageID).set({
-        readAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        isRead: true,
+      await this.fs.collection(Collections.MESSAGES).doc(messageID).update({
+        readAt: firebase.firestore.Timestamp.fromDate(new Date())
       });
     } catch {
       throw new NotFoundException();
@@ -58,14 +56,14 @@ export class MessagesService {
 
   async countUnread(toID: string): Promise<number> {
     const colRef = this.fs.collection(Collections.MESSAGES);
-    const { size } = await colRef.where('to', '==', toID).where('isRead','==',true).get();
+    const { size } = await colRef.where('to', '==', toID).orderBy('readAt').get();
     return size;
   }
 
-  async getConversation(firstRcptID: string, secondRcptID: string): Promise<Message[]> {
+  async getConversation(userID: string, peerUserID: string): Promise<Message[]> {
     const colRef = this.fs.collection(Collections.MESSAGES);
-    const firstDocRef = await colRef.where('to', '==', firstRcptID).where('from','==',secondRcptID).get();
-    const secondDocRef = await colRef.where('from', '==', secondRcptID).where('to','==',firstRcptID).get();
+    const firstDocRef = await colRef.where('to', '==', userID).where('from','==',peerUserID).get();
+    const secondDocRef = await colRef.where('from', '==', peerUserID).where('to','==',userID).get();
 
     const response: Array<Message> = [];
     each(union(firstDocRef.docs, secondDocRef.docs), doc => {
@@ -75,7 +73,6 @@ export class MessagesService {
         from: data.from,
         to: data.to,
         content: data.content,
-        isRead: data.isRead,
         readAt: data.readAt,
         createdAt: data.createdAt,
       });
@@ -85,7 +82,8 @@ export class MessagesService {
 
   async getLatest(toID: string): Promise<Message[]> {
     const colRef = this.fs.collection(Collections.MESSAGES);
-    const docRef = await colRef.where('to', '==', toID).orderBy('createdAt').limit(1).get();
+    console.log(toID);
+    const docRef = await colRef.where('to', '==', toID).orderBy('createdAt', 'desc').limit(1).get();
 
     const response: Array<Message> = [];
     each(docRef.docs, doc => {
@@ -98,7 +96,6 @@ export class MessagesService {
         from: data.from,
         to: data.to,
         content: data.content,
-        isRead: data.isRead,
         updatedAt: updatedAt? updatedAt.toDate().toUTCString(): null,
         readAt: readAt? readAt.toDate().toUTCString(): null,
         createdAt: createdAt? createdAt.toDate().toUTCString(): null,

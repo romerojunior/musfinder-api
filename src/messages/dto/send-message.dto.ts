@@ -5,11 +5,6 @@ export class SendMessageDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  from: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
   to: string;
 
   @ApiProperty()

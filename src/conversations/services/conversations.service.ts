@@ -4,7 +4,7 @@ import { Conversation, Message } from '../models';
 import { SendMessageDto } from '../dto';
 import * as firebase from 'firebase-admin';
 import { Collections } from '../../common/constants';
-import { each, map, first, orderBy } from 'lodash';
+import { each, map, first, orderBy, includes } from 'lodash';
 
 @Injectable()
 export class ConversationService {
@@ -13,6 +13,7 @@ export class ConversationService {
   private fs = firebase.firestore();
 
   async create(membersIDs: string[]): Promise<string> {
+    each(membersIDs, async userID => { await this.usersService.get(userID) });
     const now = firebase.firestore.Timestamp.fromDate(new Date());
     const docRef = this.fs.collection(Collections.CONVERSATIONS).doc();
     await docRef.set({
@@ -25,7 +26,7 @@ export class ConversationService {
   async readMessages(memberID: string, conversationID: string): Promise<Message[]> {
     const docRef = await this.fs.collection(Collections.CONVERSATIONS).doc(conversationID).get();
     const { members } = docRef.data();
-    if (memberID in members) {
+    if (includes(members,memberID)) {
       return this.getMessages(conversationID);
     }
     throw new UnauthorizedException();

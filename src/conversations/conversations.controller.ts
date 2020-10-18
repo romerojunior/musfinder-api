@@ -16,10 +16,7 @@ export class ConversationsController {
     @UserToken('user_id') userID: string,
     @Body() sendMessageDto: SendMessageDto,
   ): Promise<any> {
-    if (userID != sendMessageDto.from) {
-      throw new UnauthorizedException();
-    }
-    return this.conversationsService.sendMessage(sendMessageDto);
+    return this.conversationsService.sendMessage(userID, sendMessageDto);
   }
 
   @Get()

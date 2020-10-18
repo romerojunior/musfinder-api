@@ -5,9 +5,6 @@ export class Message {
   guid?: string;
 
   @ApiProperty()
-  to: string;
-
-  @ApiProperty()
   from: string;
 
   @ApiProperty()
@@ -15,7 +12,4 @@ export class Message {
 
   @ApiProperty()
   createdAt?: string;
-
-  @ApiProperty()
-  readAt?: string;
 }

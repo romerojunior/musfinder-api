@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { Collections } from '../../common/constants';
 import { Statuses } from '../../common/enums';
 import { RespondFriendshipDto, RequestFriendshipDto } from '../dto';
-import { each, union } from 'lodash';
+import { each, map, union } from 'lodash';
 import { Friendship } from '../models';
 import * as firebase from 'firebase-admin';
 
@@ -57,21 +57,20 @@ export class FriendshipService {
     const fromDocRef = await colRef.where('from', '==', userID).get();
     const toDocRef = await colRef.where('to', '==', userID).get();
 
-    const response: Array<Friendship> = [];
-
-    each(union(fromDocRef.docs, toDocRef.docs), doc => {
-      const friendship: any = doc.data();
-      const createdAt = <FirebaseFirestore.Timestamp>friendship.createdAt;
-      const updatedAt = <FirebaseFirestore.Timestamp>friendship.updatedAt;
-      response.push({
-        createdAt: createdAt.toDate().toUTCString(),
-        updatedAt: updatedAt.toDate().toUTCString(),
-        guid: doc.id,
-        to: friendship.to,
-        from: friendship.from,
-        status: friendship.status,
-      })
-    });
+    const response: Array<Friendship> = map(
+      union(fromDocRef.docs, toDocRef.docs), doc => {
+        const data: any = doc.data();
+        const createdAt = <FirebaseFirestore.Timestamp>data.createdAt;
+        const updatedAt = <FirebaseFirestore.Timestamp>data.updatedAt;
+        return <Friendship>{
+          createdAt: createdAt.toDate().toUTCString(),
+          updatedAt: updatedAt.toDate().toUTCString(),
+          guid: doc.id,
+          to: data.to,
+          from: data.from,
+          status: data.status,
+        }
+      });
 
     return response;
   }

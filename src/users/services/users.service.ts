@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { Geolocation, User } from '../models';
 import { SearchUserDto } from '../dto';
-import { each, intersection, isEmpty } from 'lodash';
+import { map, intersection, isEmpty } from 'lodash';
 import { Collections } from '../../common/constants';
 import * as firebase from 'firebase-admin';
 import * as geofirestore from 'geofirestore';
@@ -58,9 +58,8 @@ export class UsersService {
     });
 
     const geosnapshot = await query.get();
-    const response: Array<User> = [];
 
-    each(geosnapshot.docs, doc => {
+     const response: Array<User> = map(geosnapshot.docs, doc => {
       const data: any = doc.data();
 
       const match: boolean = (!searchUserDto.instruments && !searchUserDto.genres) ||
@@ -68,7 +67,7 @@ export class UsersService {
         !isEmpty(intersection(searchUserDto.genres, data.genres));
 
       if (match) {
-        response.push(<User>{
+        return<User>{
           guid: doc.id,
           about: data.about,
           distance: `${doc.distance.toFixed(2)} km`,
@@ -78,7 +77,7 @@ export class UsersService {
           },
           genres: data.genres,
           instruments: data.instruments,
-        });
+        };
       }
     });
 

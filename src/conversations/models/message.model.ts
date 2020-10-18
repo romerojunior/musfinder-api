@@ -14,14 +14,8 @@ export class Message {
   content: string;
 
   @ApiProperty()
-  createdAt: string;
+  createdAt?: string;
 
   @ApiProperty()
-  updatedAt: string;
-
-  @ApiProperty()
-  readAt: string;
-
-  @ApiProperty()
-  isRead: string;
+  readAt?: string;
 }

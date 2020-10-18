@@ -10,5 +10,10 @@ export class SendMessageDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
+  from: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
   content: string;
 }

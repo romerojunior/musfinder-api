@@ -43,7 +43,7 @@ export class UsersController {
   async search(
     @Body() searchUserDto: SearchUserDto
   ): Promise<User[]> {
-    return this.usersService.search(searchUserDto);
+    return this.usersService.getByCoordinates(searchUserDto);
   }
 
   /**

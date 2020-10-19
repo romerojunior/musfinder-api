@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserFullname } from './userfullname.model';
-import { Geolocation } from './geolocation.model';
+import { Fullname } from './fullname.model';
+import { Coordinates } from './coordinates.model';
+import { Profile } from './profile.model';
 
 export class User {
   @ApiProperty()
@@ -10,17 +11,11 @@ export class User {
   distance?: string;
 
   @ApiProperty()
-  coordinates?: Geolocation;
+  coordinates?: Coordinates;
 
   @ApiProperty()
-  name: UserFullname;
+  name: Fullname;
 
   @ApiProperty()
-  about: string;
-
-  @ApiProperty()
-  instruments: [string];
-
-  @ApiProperty()
-  genres: [string];
+  profile?: Profile;
 }

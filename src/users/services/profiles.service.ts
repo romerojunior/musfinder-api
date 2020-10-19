@@ -1,38 +1,74 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { Coordinates, User } from '../models';
+import { CreateProfileDto } from '../dto/create-profile.dto';
+import { Geolocation, User } from '../models';
 import { SearchUserDto } from '../dto';
 import { map, intersection, isEmpty } from 'lodash';
 import { Collections } from '../../common/constants';
 import * as firebase from 'firebase-admin';
-import * as geofirestore from 'geofirestore';
-import * as geokit from 'geokit';
 
 @Injectable()
-export class UsersService {
+export class ProfilesService {
 
   private fs = firebase.firestore();
-  private GeoFirestore = geofirestore.initializeApp(this.fs);
-  private geocollection = this.GeoFirestore.collection(Collections.USERS);
-
   /**
-   * The `create` method takes an instance of `CreateUserDto` as an argument and creates
+   * The `create` method takes an instance of `CreateProfileDto` as an argument and creates
    * it in the persistency layer.
    *
    * @param userID a string representing the guid of a user.
-   * @param createUserDto an instance of `CreateUserDto`.
+   * @param createProfileDto an instance of `CreateUserDto`.
    */
-  async create(userID: string, createUserDto: CreateUserDto): Promise<void> {
-    await this.geocollection.doc(userID).set({
-      name: {
-        first: createUserDto.name.first,
-        last: createUserDto.name.last
-      },
-      coordinates: new firebase.firestore.GeoPoint(
-        createUserDto.coordinates.latitude,
-        createUserDto.coordinates.longitude
+  async create(userID: string, createProfileDto: CreateProfileDto): Promise<void> {
+    await this.fs.collection(Collections.USERS).doc(userID).set({
+      about: createProfileDto.about,
+      genres: createProfileDto.genres,
+      instruments: createProfileDto.instruments,
+    });
+  }
+
+  /**
+   * The `search` method takes an instance of `SearchUserDto` as an agument and executes a
+   * geoquery based on the required properties of `SearchUserDto` (`_.radius`, `_.latitude`,
+   * `_.longitude`), it will then filter the results obtained from this geoquery using the
+   * optional properties of `SearchUserDto` (`_.instruments` and `_.genres`).
+   *
+   * @param searchUserDto an instance of `SearchUserDto`.
+   *
+   * @returns a list of `User`.
+   */
+  async search(searchUserDto: SearchUserDto): Promise<User[]> {
+    const query = this.geocollection.near({
+      radius: searchUserDto.radius,
+      center: new firebase.firestore.GeoPoint(
+        searchUserDto.coordinates.latitude,
+        searchUserDto.coordinates.longitude
       )
     });
+
+    const geosnapshot = await query.get();
+
+    const response: Array<User> = map(geosnapshot.docs, doc => {
+      const data: any = doc.data();
+
+      const match: boolean = (!searchUserDto.instruments && !searchUserDto.genres) ||
+        !isEmpty(intersection(searchUserDto.instruments, data.instruments)) ||
+        !isEmpty(intersection(searchUserDto.genres, data.genres));
+
+      if (match) {
+        return <User>{
+          guid: doc.id,
+          about: data.about,
+          distance: `${doc.distance.toFixed(2)} km`,
+          name: {
+            first: data.name.first,
+            last: data.name.last
+          },
+          genres: data.genres,
+          instruments: data.instruments,
+        };
+      }
+    });
+
+    return response
   }
 
   /**
@@ -60,33 +96,10 @@ export class UsersService {
         first: data.name.first,
         last: data.name.last,
       },
-      coordinates: data.coordinates,
+      about: data.about,
+      instruments: data.instruments,
+      genres: data.genres,
     }
-  }
-
-  async getByDistance(coordinates: Coordinates, radius: number): Promise<User[]> {
-    const geosnapshot = await this.geocollection.near({
-      radius: radius,
-      center: new firebase.firestore.GeoPoint(
-        coordinates.latitude,
-        coordinates.longitude
-      )
-    }).get();
-
-    const response: Array<User> = map(geosnapshot.docs, doc => {
-      const data: any = doc.data();
-      return <User>{
-        guid: doc.id,
-        about: data.about,
-        distance: `${doc.distance.toFixed(2)} km`,
-        name: {
-          first: data.name.first,
-          last: data.name.last
-        }
-      };
-    });
-
-    return response
   }
 
   /**
@@ -118,7 +131,7 @@ export class UsersService {
       about: data.about,
       instruments: data.instruments,
       genres: data.genres,
-      coordinates: <Coordinates>{
+      coordinates: <Geolocation>{
         latitude: data.coordinates.latitude,
         longitude: data.coordinates.longitude
       }

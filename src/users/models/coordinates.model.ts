@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class Error {
+export class Coordinates {
   @ApiProperty()
-  statusCode: number;
+  latitude: number;
 
   @ApiProperty()
-  message: string;
+  longitude: number;
 }

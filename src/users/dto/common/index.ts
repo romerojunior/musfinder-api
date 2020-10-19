@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, IsLatitude, IsLongitude } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class FullNameDto {
+export class FullnameDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

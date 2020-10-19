@@ -1,5 +1,4 @@
 export * from './user.model';
-export * from './userfullname.model';
-export * from './geolocation.model';
-export * from './error.model';
+export * from './fullname.model';
+export * from './coordinates.model';
 export * from './friendship.model';
